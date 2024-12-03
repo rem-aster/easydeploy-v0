@@ -22,11 +22,6 @@ type HTTPConfig interface {
 	ReadHeaderTimeout() time.Duration
 }
 
-// SwaggerConfig - config for swagger
-type SwaggerConfig interface {
-	Address() string
-}
-
 // PrometheusConfig - config for prometheus
 type PrometheusConfig interface {
 	Address() string

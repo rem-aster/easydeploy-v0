@@ -24,8 +24,7 @@ type serviceProvider struct {
 	pgConfig         config.PGConfig
 	grpcConfig       config.GRPCConfig
 	httpConfig       config.HTTPConfig
-	swaggerConfig    config.SwaggerConfig
-	prometheusConfig config.SwaggerConfig
+	prometheusConfig config.PrometheusConfig
 	loggerConfig     config.LoggerConfig
 
 	dbClient  db.Client
@@ -88,22 +87,6 @@ func (s *serviceProvider) HTTPConfig() config.HTTPConfig {
 	}
 
 	return s.httpConfig
-}
-
-func (s *serviceProvider) SwaggerConfig() config.SwaggerConfig {
-	if s.swaggerConfig == nil {
-		cfg, err := env.NewSwaggerConfig()
-		if err != nil {
-			logger.Fatal(
-				"failed to get swagger config",
-				zap.Error(err),
-			)
-		}
-
-		s.swaggerConfig = cfg
-	}
-
-	return s.swaggerConfig
 }
 
 func (s *serviceProvider) PrometheusConfig() config.PrometheusConfig {

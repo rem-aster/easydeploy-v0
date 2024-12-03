@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"io"
 	"net"
 	"net/http"
 	"os"
@@ -11,7 +10,6 @@ import (
 	grpcMiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/rakyll/statik/fs"
 	"github.com/rs/cors"
 	"gitlab.crja72.ru/gospec/go16/easydeploy/backend/internal/interceptor"
 	"gitlab.crja72.ru/gospec/go16/easydeploy/backend/internal/logger"
@@ -23,7 +21,6 @@ import (
 
 	// nolint
 	"github.com/s0vunia/platform_common/pkg/closer"
-	_ "gitlab.crja72.ru/gospec/go16/easydeploy/backend/statik"
 
 	"gitlab.crja72.ru/gospec/go16/easydeploy/backend/internal/config"
 
@@ -48,7 +45,6 @@ type App struct {
 	serviceProvider  *serviceProvider
 	grpcServer       *grpc.Server
 	httpServer       *http.Server
-	swaggerServer    *http.Server
 	prometheusServer *http.Server
 }
 
@@ -104,19 +100,6 @@ func (a *App) Run(ctx context.Context) error {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-
-		err := a.runSwaggerServer()
-		if err != nil {
-			logger.Fatal(
-				"failed to run Swagger server",
-				zap.Error(err),
-			)
-		}
-	}()
-
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
 		err := a.runPrometheus()
 		if err != nil {
 			logger.Fatal(
@@ -140,7 +123,6 @@ func (a *App) initDeps(ctx context.Context) error {
 		a.initTracing,
 		a.initGRPCServer,
 		a.initHTTPServer,
-		a.initSwaggerServer,
 		a.initPrometheusServer,
 	}
 
@@ -210,25 +192,6 @@ func (a *App) initHTTPServer(ctx context.Context) error {
 	a.httpServer = &http.Server{
 		Addr:              a.serviceProvider.HTTPConfig().Address(),
 		Handler:           corsMiddleware.Handler(mux),
-		ReadHeaderTimeout: a.serviceProvider.HTTPConfig().ReadHeaderTimeout(),
-	}
-
-	return nil
-}
-
-func (a *App) initSwaggerServer(_ context.Context) error {
-	statikFs, err := fs.New()
-	if err != nil {
-		return err
-	}
-
-	mux := http.NewServeMux()
-	mux.Handle("/", http.StripPrefix("/", http.FileServer(statikFs)))
-	mux.HandleFunc("/api.swagger.json", serveSwaggerFile("/api.swagger.json"))
-
-	a.swaggerServer = &http.Server{
-		Addr:              a.serviceProvider.SwaggerConfig().Address(),
-		Handler:           mux,
 		ReadHeaderTimeout: a.serviceProvider.HTTPConfig().ReadHeaderTimeout(),
 	}
 
@@ -308,80 +271,6 @@ func (a *App) runPrometheus() error {
 	}
 
 	return nil
-}
-
-func (a *App) runSwaggerServer() error {
-	logger.Info("Swagger server is running",
-		zap.String("address", a.serviceProvider.SwaggerConfig().Address()),
-	)
-
-	err := a.swaggerServer.ListenAndServe()
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func serveSwaggerFile(path string) http.HandlerFunc {
-	return func(w http.ResponseWriter, _ *http.Request) {
-		logger.Info(
-			"Serve swagger file",
-			zap.String("path", path),
-		)
-
-		statikFs, err := fs.New()
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		logger.Info(
-			"Get swagger file",
-			zap.String("path", path),
-		)
-
-		file, err := statikFs.Open(path)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		defer func(file http.File) {
-			err = file.Close()
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-		}(file)
-
-		logger.Info(
-			"Read swagger file",
-			zap.String("path", path),
-		)
-
-		content, err := io.ReadAll(file)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		logger.Info(
-			"Serve swagger file",
-			zap.String("path", path),
-		)
-
-		w.Header().Set("Content-Type", "application/json")
-		_, err = w.Write(content)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		logger.Info(
-			"Serve swagger file",
-			zap.String("path", path),
-		)
-	}
 }
 
 func (a *App) getCore(level zap.AtomicLevel) zapcore.Core {
