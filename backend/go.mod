@@ -14,7 +14,6 @@ require (
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.20.2
-	github.com/rakyll/statik v0.1.7
 	github.com/rs/cors v1.11.0
 	github.com/s0vunia/platform_common v1.1.3
 	github.com/uber/jaeger-client-go v2.30.0+incompatible
