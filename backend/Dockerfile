@@ -1,11 +1,17 @@
-FROM golang:alpine as builder
+ARG CONFIG_PATH
+
+FROM golang:1.22-alpine AS builder
 
 WORKDIR /app
-COPY go.* ./
-RUN go mod download
-COPY . ./
-RUN go build -v -o backend
+COPY . .
 
-FROM alpine
-COPY --from=builder /app/backend /app/backend
-CMD ["/app/backend"]
+RUN go mod download
+RUN go build -o ./bin/crud_server cmd/worker/main.go
+
+FROM alpine:latest
+
+WORKDIR /app
+COPY --from=builder /app/bin/crud_server .
+COPY .env .
+
+CMD ["./crud_server"]
