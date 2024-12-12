@@ -1,0 +1,7 @@
+node_modules/
+public/static/css/
+internal/views/components/*.go
+internal/views/components/*.txt
+internal/views/*.go
+internal/views/*.txt
+.vscode/
