@@ -6,6 +6,7 @@ toolchain go1.22.5
 
 require (
 	github.com/Masterminds/squirrel v1.5.4
+	github.com/avast/retry-go v2.7.0+incompatible
 	github.com/envoyproxy/protoc-gen-validate v1.0.4
 	github.com/gojuno/minimock/v3 v3.3.13
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
@@ -27,7 +28,6 @@ require (
 
 require (
 	github.com/HdrHistogram/hdrhistogram-go v1.1.2 // indirect
-	github.com/avast/retry-go v2.7.0+incompatible // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
