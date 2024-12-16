@@ -8,16 +8,19 @@ import (
 
 type serv struct {
 	solutionRepository repository.SolutionRepository
+	deployRepository   repository.DeployRepository
 	txManager          db.TxManager
 }
 
 // NewService creates a new user service.
 func NewService(
 	solutionRepository repository.SolutionRepository,
+	deployRepository repository.DeployRepository,
 	txManager db.TxManager,
 ) service.SolutionService {
 	return &serv{
 		solutionRepository: solutionRepository,
+		deployRepository:   deployRepository,
 		txManager:          txManager,
 	}
 }

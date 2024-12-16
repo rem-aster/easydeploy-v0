@@ -2,6 +2,7 @@ package solution
 
 import (
 	"context"
+	"fmt"
 
 	"gitlab.crja72.ru/gospec/go16/easydeploy/backend/internal/converter"
 	"gitlab.crja72.ru/gospec/go16/easydeploy/backend/internal/logger"
@@ -18,6 +19,7 @@ func (i *Implementation) List(ctx context.Context, req *desc.ListRequest) (*desc
 
 	var descSolutions []*desc.Solution
 	for _, solution := range solutions {
+		logger.Info(fmt.Sprintf("solution: %+v", solution))
 		descSolutions = append(descSolutions, converter.ToSolutionFromService(solution))
 	}
 	return &desc.ListResponse{

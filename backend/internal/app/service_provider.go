@@ -12,6 +12,7 @@ import (
 	"go.uber.org/zap"
 
 	"gitlab.crja72.ru/gospec/go16/easydeploy/backend/internal/config/env"
+	deployRepository "gitlab.crja72.ru/gospec/go16/easydeploy/backend/internal/repository/deploy"
 	solutionRepository "gitlab.crja72.ru/gospec/go16/easydeploy/backend/internal/repository/solution"
 	solutionService "gitlab.crja72.ru/gospec/go16/easydeploy/backend/internal/service/solution"
 
@@ -31,6 +32,7 @@ type serviceProvider struct {
 	txManager db.TxManager
 
 	solutionRepository repository.SolutionRepository
+	deployRepository   repository.DeployRepository
 
 	solutionService service.SolutionService
 
@@ -160,10 +162,19 @@ func (s *serviceProvider) SolutionRepository(ctx context.Context) repository.Sol
 	return s.solutionRepository
 }
 
+func (s *serviceProvider) DeployRepository(ctx context.Context) repository.DeployRepository {
+	if s.deployRepository == nil {
+		s.deployRepository = deployRepository.NewRepository(s.DBClient(ctx))
+	}
+
+	return s.deployRepository
+}
+
 func (s *serviceProvider) SolutionService(ctx context.Context) service.SolutionService {
 	if s.solutionService == nil {
 		s.solutionService = solutionService.NewService(
 			s.SolutionRepository(ctx),
+			s.DeployRepository(ctx),
 			s.TxManager(ctx),
 		)
 	}
