@@ -1,0 +1,24 @@
+- name: Test Ansible async execution
+  hosts: all
+  gather_facts: false
+
+  tasks:
+    - name: Start a long-running command (simulate async)
+      command: sleep 30
+      async: 60   # Максимальное время выполнения команды в секундах
+      poll: 0     # Запуск задачи в асинхронном режиме
+      register: sleep_result
+
+    - name: Echo
+      command: echo "Hi"
+    - name: Wait for async task to complete
+      async_status:
+        jid: "{{ sleep_result.ansible_job_id }}"
+      register: job_status
+      until: job_status.finished
+      retries: 10
+      delay: 3
+
+    - name: Debug the result of the async task
+      debug:
+        var: job_status
