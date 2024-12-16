@@ -1,9 +1,17 @@
 -- +goose Up
 -- +goose StatementBegin
-SELECT 'up SQL query';
+CREATE TABLE "solution"
+(
+    "id"          SERIAL PRIMARY KEY,
+    "name"        VARCHAR(255),
+    "description" TEXT,
+    "playbook"    VARCHAR(255),
+    created_at    TIMESTAMP NOT NULL DEFAULT now(),
+    updated_at    TIMESTAMP
+);
 -- +goose StatementEnd
 
 -- +goose Down
 -- +goose StatementBegin
-SELECT 'down SQL query';
+DROP TABLE "solution"
 -- +goose StatementEnd
