@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/s0vunia/platform_common/pkg/closer"
 	"github.com/s0vunia/platform_common/pkg/db"
@@ -19,6 +20,8 @@ import (
 	"gitlab.crja72.ru/gospec/go16/easydeploy/backend/internal/config"
 	"gitlab.crja72.ru/gospec/go16/easydeploy/backend/internal/repository"
 	"gitlab.crja72.ru/gospec/go16/easydeploy/backend/internal/service"
+
+	"github.com/avast/retry-go"
 )
 
 type serviceProvider struct {
@@ -123,7 +126,19 @@ func (s *serviceProvider) LoggerConfig() config.LoggerConfig {
 
 func (s *serviceProvider) DBClient(ctx context.Context) db.Client {
 	if s.dbClient == nil {
-		cl, err := pg.New(ctx, s.PGConfig().DSN())
+		var cl db.Client
+		err := retry.Do(
+			func() error {
+				var err error
+				cl, err = pg.New(ctx, s.PGConfig().DSN())
+				return err
+			},
+			retry.Attempts(3),
+			retry.OnRetry(func(n uint, err error) {
+				logger.Info("Retrying request after error: %v",
+					zap.Error(err))
+			}),
+		)
 		if err != nil {
 			logger.Fatal(
 				"failed to get db client",
