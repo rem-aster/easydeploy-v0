@@ -19,6 +19,7 @@ services:
       - "2112:2112"
     volumes:
       - ./backend/logs:/app/logs
+      - ./playbooks:/app/playbooks
     depends_on:
       - pg
 
