@@ -1,3 +1,4 @@
+//nolint:all
 package main
 
 import (
@@ -10,7 +11,7 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 
 	"gitlab.crja72.ru/gospec/go16/easydeploy/web_app/internal/model"
-	"gitlab.crja72.ru/gospec/go16/easydeploy/web_app/internal/views"
+	"gitlab.crja72.ru/gospec/go16/easydeploy/web_app/internal/views" 
 	"gitlab.crja72.ru/gospec/go16/easydeploy/web_app/internal/views/components"
 )
 

@@ -42,6 +42,17 @@ generate-solution-api:
 	--plugin=protoc-gen-openapiv2=backend/bin/protoc-gen-openapiv2 \
 	proto/backend.proto
 
+generate-webapp:
+	make generate-templ
+	mkdir -p web_app/pkg/solution_v1
+	protoc --proto_path proto \
+	--go_out=web_app/pkg/solution_v1 --go_opt=paths=source_relative \
+	--go-grpc_out=web_app/pkg/solution_v1 --go-grpc_opt=paths=source_relative \
+	--validate_out lang=go:backend/pkg/solution_v1 --validate_opt=paths=source_relative \
+	proto/backend.proto
+
+
+
 generate-runner-api:
 	mkdir -p backend/pkg/runner_v1
 	protoc --proto_path proto --proto_path backend/vendor.protogen \
@@ -51,6 +62,9 @@ generate-runner-api:
 	--plugin=protoc-gen-go-grpc=backend/bin/protoc-gen-go-grpc \
 	proto/runner.proto
 
+generate-templ:
+	templ generate -path web_app
+
 install-deps:
 	GOBIN=$(LOCAL_BIN) go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.28.1
 	GOBIN=$(LOCAL_BIN) go install -mod=mod google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.2
@@ -58,3 +72,4 @@ install-deps:
 	GOBIN=$(LOCAL_BIN) go install github.com/envoyproxy/protoc-gen-validate@v0.10.1
 	GOBIN=$(LOCAL_BIN) go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v2.15.2
 	GOBIN=$(LOCAL_BIN) go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@v2.15.2
+	GOBIN=$(LOCAL_BIN) go install github.com/a-h/templ/cmd/templ@latest

@@ -8,7 +8,6 @@ RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && apt-get install
     npm install -g npm && \
     npm install && \
     npx tailwindcss -i styles.css -o public/static/css/tw.css
-RUN templ generate
 RUN CGO_ENABLED=0 GOOS=linux go build -o /app/main
 
 FROM alpine
