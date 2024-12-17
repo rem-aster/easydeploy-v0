@@ -10,5 +10,5 @@ import (
 type SolutionService interface {
 	List(ctx context.Context) ([]*model.Solution, error)
 	Deploy(ctx context.Context, deploy *model.Deploy) (int64, error)
-	DeployStatus(ctx context.Context) error
+	DeployStatus(ctx context.Context, id int64) (string, string, error)
 }

@@ -22,5 +22,27 @@ func ToDeployInfoRepoFromModel(deployInfo *model.DeployInfo) modelRepo.DeployInf
 		SSHAddress: deployInfo.SSHAddress,
 		SSHKey:     deployInfo.SSHKey,
 		Extra:      deployInfo.Extra,
+		IDPlaybook: deployInfo.IDPlaybook,
+	}
+}
+
+func ToDeployModelFromRepo(deploy *modelRepo.Deploy) *model.Deploy {
+	return &model.Deploy{
+		ID:         deploy.ID,
+		DeployInfo: ToDeployInfoModelFromRepo(&deploy.DeployInfo),
+		CreatedAt:  deploy.CreatedAt,
+		UpdatedAt:  deploy.UpdatedAt,
+	}
+}
+
+func ToDeployInfoModelFromRepo(deployInfo *modelRepo.DeployInfo) model.DeployInfo {
+	return model.DeployInfo{
+		SolutionId: deployInfo.SolutionId,
+		Status:     model.DeployStatus(deployInfo.Status),
+		Name:       deployInfo.Name,
+		SSHAddress: deployInfo.SSHAddress,
+		SSHKey:     deployInfo.SSHKey,
+		Extra:      deployInfo.Extra,
+		IDPlaybook: deployInfo.IDPlaybook,
 	}
 }

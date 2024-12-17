@@ -808,6 +808,8 @@ func (m *GetDeployStatusRequest) validate(all bool) error {
 
 	var errors []error
 
+	// no validation rules for Id
+
 	if len(errors) > 0 {
 		return GetDeployStatusRequestMultiError(errors)
 	}
@@ -909,6 +911,10 @@ func (m *GetDeployStatusResponse) validate(all bool) error {
 	}
 
 	var errors []error
+
+	// no validation rules for Status
+
+	// no validation rules for Error
 
 	if len(errors) > 0 {
 		return GetDeployStatusResponseMultiError(errors)
