@@ -1,7 +1,7 @@
 .PHONY: up down build migrate test
 
 up:
-	docker compose up -d
+	docker compose up -d --remove-orphans
 
 down:
 	docker compose down
