@@ -1,0 +1,51 @@
+---
+- name: Deploy application to production
+  hosts: all
+  become: true
+  vars:
+    app_directory: /
+    docker_compose_file: compose.yml
+    services:
+      - backend
+      - runner
+      - web_app
+
+  tasks:
+    - name: Ensure app directory exists
+      file:
+        path: "{{ app_directory }}"
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0755'
+
+    - name: Copy project files to server
+      synchronize:
+        src: ./
+        dest: "{{ app_directory }}"
+        rsync_opts:
+          - "--exclude=node_modules"
+          - "--exclude=.git"
+
+    - name: Install Docker if not present
+      apt:
+        name: docker.io
+        state: present
+        update_cache: yes
+
+    - name: Install Docker Compose if not present
+      get_url:
+        url: https://github.com/docker/compose/releases/download/v2.32.1/docker-compose-linux-x86_64
+        dest: /usr/local/bin/docker-compose
+        mode: '0755'
+      when: not ansible_facts['cmdline']['docker-compose']
+
+    - name: Start services with Docker Compose
+      command: docker compose -f "{{ app_directory }}/{{ docker_compose_file }}" up -d
+      args:
+        chdir: "{{ app_directory }}"
+
+    - name: Ensure all services are running
+      command: docker compose -f "{{ app_directory }}/{{ docker_compose_file }}" ps
+      args:
+        chdir: "{{ app_directory }}"
