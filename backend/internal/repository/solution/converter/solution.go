@@ -18,6 +18,8 @@ func ToSolutionFromRepo(solution *modelRepo.Solution) *model.Solution {
 // ToSolutionInfoFromRepo converts a SolutionInfo object from the model package to a SolutionInfo object from the repository package.
 func ToSolutionInfoFromRepo(info modelRepo.SolutionInfo) model.SolutionInfo {
 	return model.SolutionInfo{
-		Status: model.DeployStatus(info.Status),
+		Name:        info.Name,
+		Description: info.Description,
+		Playbook:    info.Playbook,
 	}
 }

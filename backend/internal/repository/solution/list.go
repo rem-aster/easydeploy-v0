@@ -11,7 +11,7 @@ import (
 )
 
 func (r *repo) List(ctx context.Context) ([]*model.Solution, error) {
-	builderSelectOne := sq.Select(idColumn, nameColumn, createdAtColumn, updatedAtColumn).
+	builderSelectOne := sq.Select(idColumn, nameColumn, descriptionColumn, createdAtColumn, updatedAtColumn).
 		From(tableName).
 		PlaceholderFormat(sq.Dollar)
 

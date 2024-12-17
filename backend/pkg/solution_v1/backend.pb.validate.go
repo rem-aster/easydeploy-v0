@@ -68,7 +68,16 @@ func (m *SolutionInfo) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	// no validation rules for Status
+	if l := utf8.RuneCountInString(m.GetDescription()); l < 1 || l > 500 {
+		err := SolutionInfoValidationError{
+			field:  "Description",
+			reason: "value length must be between 1 and 500 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
 	if len(errors) > 0 {
 		return SolutionInfoMultiError(errors)
@@ -589,6 +598,14 @@ func (m *DeployRequest) validate(all bool) error {
 
 	var errors []error
 
+	// no validation rules for SolutionId
+
+	// no validation rules for SshAddress
+
+	// no validation rules for SshKey
+
+	// no validation rules for ExtraVars
+
 	if len(errors) > 0 {
 		return DeployRequestMultiError(errors)
 	}
@@ -688,6 +705,8 @@ func (m *DeployResponse) validate(all bool) error {
 	}
 
 	var errors []error
+
+	// no validation rules for Id
 
 	if len(errors) > 0 {
 		return DeployResponseMultiError(errors)

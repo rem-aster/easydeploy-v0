@@ -1,0 +1,14 @@
+- name: Install OpenSSL if not already installed
+  hosts: all
+  become: true  # Для выполнения задач с правами администратора
+  tasks:
+    - name: Check if OpenSSL is installed
+      command: openssl version
+      register: openssl_installed
+      ignore_errors: true
+
+    - name: Install OpenSSL if not installed
+      package:
+        name: openssl
+        state: present
+      when: openssl_installed.rc != 0
