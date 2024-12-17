@@ -68,7 +68,7 @@ message ListResponse {
 message DeployRequest {
   int64 solution_id = 1;
   string ssh_address = 2;
-  bytes ssh_key = 3;
+  string ssh_key = 3;
   map<string, string> extra_vars = 5;
 }
 
@@ -77,7 +77,10 @@ message DeployResponse {
 }
 
 message GetDeployStatusRequest {
+  int64 id = 1;
 }
 
 message GetDeployStatusResponse {
+  string status = 1;
+  string error = 2;
 }

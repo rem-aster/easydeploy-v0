@@ -17,8 +17,9 @@ type DeployInfo struct {
 	Status     DeployStatus
 	Name       string
 	SSHAddress string
-	SSHKey     []byte
+	SSHKey     string
 	Extra      interface{}
+	IDPlaybook string
 }
 type DeployStatus int32
 

@@ -41,6 +41,11 @@ type LoggerConfig interface {
 	MaxBackups() int
 }
 
+// RunnerServiceConfig config for gRPC server
+type RunnerServiceConfig interface {
+	Address() string
+}
+
 // Load - loads config from .env
 func Load(path string) error {
 	err := godotenv.Load(path)

@@ -14,6 +14,7 @@ const (
 	sshAddressColumn = "ssh_address"
 	sshKeyColumn     = "ssh_key"
 	extraColumn      = "extra"
+	idPlaybookColumn = "id_playbook"
 	createdAtColumn  = "created_at"
 	updatedAtColumn  = "updated_at"
 )

@@ -8,6 +8,8 @@ import (
 	"github.com/s0vunia/platform_common/pkg/db/pg"
 	"github.com/s0vunia/platform_common/pkg/db/transaction"
 	"gitlab.crja72.ru/gospec/go16/easydeploy/backend/internal/api/solution"
+	"gitlab.crja72.ru/gospec/go16/easydeploy/backend/internal/client/runnerService"
+	runnerService2 "gitlab.crja72.ru/gospec/go16/easydeploy/backend/internal/client/runnerService/runnerService"
 	"gitlab.crja72.ru/gospec/go16/easydeploy/backend/internal/logger"
 	"go.uber.org/zap"
 
@@ -24,11 +26,12 @@ import (
 )
 
 type serviceProvider struct {
-	pgConfig         config.PGConfig
-	grpcConfig       config.GRPCConfig
-	httpConfig       config.HTTPConfig
-	prometheusConfig config.PrometheusConfig
-	loggerConfig     config.LoggerConfig
+	pgConfig            config.PGConfig
+	grpcConfig          config.GRPCConfig
+	httpConfig          config.HTTPConfig
+	prometheusConfig    config.PrometheusConfig
+	loggerConfig        config.LoggerConfig
+	runnerServiceConfig config.RunnerServiceConfig
 
 	dbClient  db.Client
 	txManager db.TxManager
@@ -37,6 +40,7 @@ type serviceProvider struct {
 	deployRepository   repository.DeployRepository
 
 	solutionService service.SolutionService
+	runnerService   runnerService.RunnerService
 
 	solutionImpl *solution.Implementation
 }
@@ -123,6 +127,20 @@ func (s *serviceProvider) LoggerConfig() config.LoggerConfig {
 	return s.loggerConfig
 }
 
+func (s *serviceProvider) RunnerServiceConfig() config.RunnerServiceConfig {
+	if s.runnerServiceConfig == nil {
+		cfg, err := env.NewRunnerServiceConfig()
+		if err != nil {
+			logger.Fatal(
+				"failed to get runner service config",
+				zap.Error(err),
+			)
+		}
+		s.runnerServiceConfig = cfg
+	}
+	return s.runnerServiceConfig
+}
+
 func (s *serviceProvider) DBClient(ctx context.Context) db.Client {
 	if s.dbClient == nil {
 		var cl db.Client
@@ -184,11 +202,29 @@ func (s *serviceProvider) DeployRepository(ctx context.Context) repository.Deplo
 	return s.deployRepository
 }
 
+func (s *serviceProvider) RunnerService(ctx context.Context) runnerService.RunnerService {
+	if s.runnerService == nil {
+		var err error
+		s.runnerService, err = runnerService2.NewClient(
+			s.RunnerServiceConfig().Address(),
+		)
+		if err != nil {
+			logger.Fatal(
+				"failed to get runner service",
+				zap.Error(err),
+			)
+		}
+	}
+
+	return s.runnerService
+}
+
 func (s *serviceProvider) SolutionService(ctx context.Context) service.SolutionService {
 	if s.solutionService == nil {
 		s.solutionService = solutionService.NewService(
 			s.SolutionRepository(ctx),
 			s.DeployRepository(ctx),
+			s.RunnerService(ctx),
 			s.TxManager(ctx),
 		)
 	}

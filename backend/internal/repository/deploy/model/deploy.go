@@ -17,8 +17,9 @@ type DeployInfo struct {
 	Status     DeployStatus `db:"status"`
 	Name       string       `db:"name"`
 	SSHAddress string       `db:"ssh_address"`
-	SSHKey     []byte       `db:"ssh_key"`
+	SSHKey     string       `db:"ssh_key"`
 	Extra      interface{}  `db:"extra"`
+	IDPlaybook string       `db:"id_playbook"`
 }
 type DeployStatus int32
 

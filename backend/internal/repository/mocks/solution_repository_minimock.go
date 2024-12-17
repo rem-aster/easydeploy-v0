@@ -19,6 +19,12 @@ type SolutionRepositoryMock struct {
 	t          minimock.Tester
 	finishOnce sync.Once
 
+	funcGet          func(ctx context.Context, id int64) (sp1 *model.Solution, err error)
+	inspectFuncGet   func(ctx context.Context, id int64)
+	afterGetCounter  uint64
+	beforeGetCounter uint64
+	GetMock          mSolutionRepositoryMockGet
+
 	funcList          func(ctx context.Context) (spa1 []*model.Solution, err error)
 	inspectFuncList   func(ctx context.Context)
 	afterListCounter  uint64
@@ -34,12 +40,336 @@ func NewSolutionRepositoryMock(t minimock.Tester) *SolutionRepositoryMock {
 		controller.RegisterMocker(m)
 	}
 
+	m.GetMock = mSolutionRepositoryMockGet{mock: m}
+	m.GetMock.callArgs = []*SolutionRepositoryMockGetParams{}
+
 	m.ListMock = mSolutionRepositoryMockList{mock: m}
 	m.ListMock.callArgs = []*SolutionRepositoryMockListParams{}
 
 	t.Cleanup(m.MinimockFinish)
 
 	return m
+}
+
+type mSolutionRepositoryMockGet struct {
+	optional           bool
+	mock               *SolutionRepositoryMock
+	defaultExpectation *SolutionRepositoryMockGetExpectation
+	expectations       []*SolutionRepositoryMockGetExpectation
+
+	callArgs []*SolutionRepositoryMockGetParams
+	mutex    sync.RWMutex
+
+	expectedInvocations uint64
+}
+
+// SolutionRepositoryMockGetExpectation specifies expectation struct of the SolutionRepository.Get
+type SolutionRepositoryMockGetExpectation struct {
+	mock      *SolutionRepositoryMock
+	params    *SolutionRepositoryMockGetParams
+	paramPtrs *SolutionRepositoryMockGetParamPtrs
+	results   *SolutionRepositoryMockGetResults
+	Counter   uint64
+}
+
+// SolutionRepositoryMockGetParams contains parameters of the SolutionRepository.Get
+type SolutionRepositoryMockGetParams struct {
+	ctx context.Context
+	id  int64
+}
+
+// SolutionRepositoryMockGetParamPtrs contains pointers to parameters of the SolutionRepository.Get
+type SolutionRepositoryMockGetParamPtrs struct {
+	ctx *context.Context
+	id  *int64
+}
+
+// SolutionRepositoryMockGetResults contains results of the SolutionRepository.Get
+type SolutionRepositoryMockGetResults struct {
+	sp1 *model.Solution
+	err error
+}
+
+// Marks this method to be optional. The default behavior of any method with Return() is '1 or more', meaning
+// the test will fail minimock's automatic final call check if the mocked method was not called at least once.
+// Optional() makes method check to work in '0 or more' mode.
+// It is NOT RECOMMENDED to use this option by default unless you really need it, as it helps to
+// catch the problems when the expected method call is totally skipped during test run.
+func (mmGet *mSolutionRepositoryMockGet) Optional() *mSolutionRepositoryMockGet {
+	mmGet.optional = true
+	return mmGet
+}
+
+// Expect sets up expected params for SolutionRepository.Get
+func (mmGet *mSolutionRepositoryMockGet) Expect(ctx context.Context, id int64) *mSolutionRepositoryMockGet {
+	if mmGet.mock.funcGet != nil {
+		mmGet.mock.t.Fatalf("SolutionRepositoryMock.Get mock is already set by Set")
+	}
+
+	if mmGet.defaultExpectation == nil {
+		mmGet.defaultExpectation = &SolutionRepositoryMockGetExpectation{}
+	}
+
+	if mmGet.defaultExpectation.paramPtrs != nil {
+		mmGet.mock.t.Fatalf("SolutionRepositoryMock.Get mock is already set by ExpectParams functions")
+	}
+
+	mmGet.defaultExpectation.params = &SolutionRepositoryMockGetParams{ctx, id}
+	for _, e := range mmGet.expectations {
+		if minimock.Equal(e.params, mmGet.defaultExpectation.params) {
+			mmGet.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmGet.defaultExpectation.params)
+		}
+	}
+
+	return mmGet
+}
+
+// ExpectCtxParam1 sets up expected param ctx for SolutionRepository.Get
+func (mmGet *mSolutionRepositoryMockGet) ExpectCtxParam1(ctx context.Context) *mSolutionRepositoryMockGet {
+	if mmGet.mock.funcGet != nil {
+		mmGet.mock.t.Fatalf("SolutionRepositoryMock.Get mock is already set by Set")
+	}
+
+	if mmGet.defaultExpectation == nil {
+		mmGet.defaultExpectation = &SolutionRepositoryMockGetExpectation{}
+	}
+
+	if mmGet.defaultExpectation.params != nil {
+		mmGet.mock.t.Fatalf("SolutionRepositoryMock.Get mock is already set by Expect")
+	}
+
+	if mmGet.defaultExpectation.paramPtrs == nil {
+		mmGet.defaultExpectation.paramPtrs = &SolutionRepositoryMockGetParamPtrs{}
+	}
+	mmGet.defaultExpectation.paramPtrs.ctx = &ctx
+
+	return mmGet
+}
+
+// ExpectIdParam2 sets up expected param id for SolutionRepository.Get
+func (mmGet *mSolutionRepositoryMockGet) ExpectIdParam2(id int64) *mSolutionRepositoryMockGet {
+	if mmGet.mock.funcGet != nil {
+		mmGet.mock.t.Fatalf("SolutionRepositoryMock.Get mock is already set by Set")
+	}
+
+	if mmGet.defaultExpectation == nil {
+		mmGet.defaultExpectation = &SolutionRepositoryMockGetExpectation{}
+	}
+
+	if mmGet.defaultExpectation.params != nil {
+		mmGet.mock.t.Fatalf("SolutionRepositoryMock.Get mock is already set by Expect")
+	}
+
+	if mmGet.defaultExpectation.paramPtrs == nil {
+		mmGet.defaultExpectation.paramPtrs = &SolutionRepositoryMockGetParamPtrs{}
+	}
+	mmGet.defaultExpectation.paramPtrs.id = &id
+
+	return mmGet
+}
+
+// Inspect accepts an inspector function that has same arguments as the SolutionRepository.Get
+func (mmGet *mSolutionRepositoryMockGet) Inspect(f func(ctx context.Context, id int64)) *mSolutionRepositoryMockGet {
+	if mmGet.mock.inspectFuncGet != nil {
+		mmGet.mock.t.Fatalf("Inspect function is already set for SolutionRepositoryMock.Get")
+	}
+
+	mmGet.mock.inspectFuncGet = f
+
+	return mmGet
+}
+
+// Return sets up results that will be returned by SolutionRepository.Get
+func (mmGet *mSolutionRepositoryMockGet) Return(sp1 *model.Solution, err error) *SolutionRepositoryMock {
+	if mmGet.mock.funcGet != nil {
+		mmGet.mock.t.Fatalf("SolutionRepositoryMock.Get mock is already set by Set")
+	}
+
+	if mmGet.defaultExpectation == nil {
+		mmGet.defaultExpectation = &SolutionRepositoryMockGetExpectation{mock: mmGet.mock}
+	}
+	mmGet.defaultExpectation.results = &SolutionRepositoryMockGetResults{sp1, err}
+	return mmGet.mock
+}
+
+// Set uses given function f to mock the SolutionRepository.Get method
+func (mmGet *mSolutionRepositoryMockGet) Set(f func(ctx context.Context, id int64) (sp1 *model.Solution, err error)) *SolutionRepositoryMock {
+	if mmGet.defaultExpectation != nil {
+		mmGet.mock.t.Fatalf("Default expectation is already set for the SolutionRepository.Get method")
+	}
+
+	if len(mmGet.expectations) > 0 {
+		mmGet.mock.t.Fatalf("Some expectations are already set for the SolutionRepository.Get method")
+	}
+
+	mmGet.mock.funcGet = f
+	return mmGet.mock
+}
+
+// When sets expectation for the SolutionRepository.Get which will trigger the result defined by the following
+// Then helper
+func (mmGet *mSolutionRepositoryMockGet) When(ctx context.Context, id int64) *SolutionRepositoryMockGetExpectation {
+	if mmGet.mock.funcGet != nil {
+		mmGet.mock.t.Fatalf("SolutionRepositoryMock.Get mock is already set by Set")
+	}
+
+	expectation := &SolutionRepositoryMockGetExpectation{
+		mock:   mmGet.mock,
+		params: &SolutionRepositoryMockGetParams{ctx, id},
+	}
+	mmGet.expectations = append(mmGet.expectations, expectation)
+	return expectation
+}
+
+// Then sets up SolutionRepository.Get return parameters for the expectation previously defined by the When method
+func (e *SolutionRepositoryMockGetExpectation) Then(sp1 *model.Solution, err error) *SolutionRepositoryMock {
+	e.results = &SolutionRepositoryMockGetResults{sp1, err}
+	return e.mock
+}
+
+// Times sets number of times SolutionRepository.Get should be invoked
+func (mmGet *mSolutionRepositoryMockGet) Times(n uint64) *mSolutionRepositoryMockGet {
+	if n == 0 {
+		mmGet.mock.t.Fatalf("Times of SolutionRepositoryMock.Get mock can not be zero")
+	}
+	mm_atomic.StoreUint64(&mmGet.expectedInvocations, n)
+	return mmGet
+}
+
+func (mmGet *mSolutionRepositoryMockGet) invocationsDone() bool {
+	if len(mmGet.expectations) == 0 && mmGet.defaultExpectation == nil && mmGet.mock.funcGet == nil {
+		return true
+	}
+
+	totalInvocations := mm_atomic.LoadUint64(&mmGet.mock.afterGetCounter)
+	expectedInvocations := mm_atomic.LoadUint64(&mmGet.expectedInvocations)
+
+	return totalInvocations > 0 && (expectedInvocations == 0 || expectedInvocations == totalInvocations)
+}
+
+// Get implements repository.SolutionRepository
+func (mmGet *SolutionRepositoryMock) Get(ctx context.Context, id int64) (sp1 *model.Solution, err error) {
+	mm_atomic.AddUint64(&mmGet.beforeGetCounter, 1)
+	defer mm_atomic.AddUint64(&mmGet.afterGetCounter, 1)
+
+	if mmGet.inspectFuncGet != nil {
+		mmGet.inspectFuncGet(ctx, id)
+	}
+
+	mm_params := SolutionRepositoryMockGetParams{ctx, id}
+
+	// Record call args
+	mmGet.GetMock.mutex.Lock()
+	mmGet.GetMock.callArgs = append(mmGet.GetMock.callArgs, &mm_params)
+	mmGet.GetMock.mutex.Unlock()
+
+	for _, e := range mmGet.GetMock.expectations {
+		if minimock.Equal(*e.params, mm_params) {
+			mm_atomic.AddUint64(&e.Counter, 1)
+			return e.results.sp1, e.results.err
+		}
+	}
+
+	if mmGet.GetMock.defaultExpectation != nil {
+		mm_atomic.AddUint64(&mmGet.GetMock.defaultExpectation.Counter, 1)
+		mm_want := mmGet.GetMock.defaultExpectation.params
+		mm_want_ptrs := mmGet.GetMock.defaultExpectation.paramPtrs
+
+		mm_got := SolutionRepositoryMockGetParams{ctx, id}
+
+		if mm_want_ptrs != nil {
+
+			if mm_want_ptrs.ctx != nil && !minimock.Equal(*mm_want_ptrs.ctx, mm_got.ctx) {
+				mmGet.t.Errorf("SolutionRepositoryMock.Get got unexpected parameter ctx, want: %#v, got: %#v%s\n", *mm_want_ptrs.ctx, mm_got.ctx, minimock.Diff(*mm_want_ptrs.ctx, mm_got.ctx))
+			}
+
+			if mm_want_ptrs.id != nil && !minimock.Equal(*mm_want_ptrs.id, mm_got.id) {
+				mmGet.t.Errorf("SolutionRepositoryMock.Get got unexpected parameter id, want: %#v, got: %#v%s\n", *mm_want_ptrs.id, mm_got.id, minimock.Diff(*mm_want_ptrs.id, mm_got.id))
+			}
+
+		} else if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
+			mmGet.t.Errorf("SolutionRepositoryMock.Get got unexpected parameters, want: %#v, got: %#v%s\n", *mm_want, mm_got, minimock.Diff(*mm_want, mm_got))
+		}
+
+		mm_results := mmGet.GetMock.defaultExpectation.results
+		if mm_results == nil {
+			mmGet.t.Fatal("No results are set for the SolutionRepositoryMock.Get")
+		}
+		return (*mm_results).sp1, (*mm_results).err
+	}
+	if mmGet.funcGet != nil {
+		return mmGet.funcGet(ctx, id)
+	}
+	mmGet.t.Fatalf("Unexpected call to SolutionRepositoryMock.Get. %v %v", ctx, id)
+	return
+}
+
+// GetAfterCounter returns a count of finished SolutionRepositoryMock.Get invocations
+func (mmGet *SolutionRepositoryMock) GetAfterCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmGet.afterGetCounter)
+}
+
+// GetBeforeCounter returns a count of SolutionRepositoryMock.Get invocations
+func (mmGet *SolutionRepositoryMock) GetBeforeCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmGet.beforeGetCounter)
+}
+
+// Calls returns a list of arguments used in each call to SolutionRepositoryMock.Get.
+// The list is in the same order as the calls were made (i.e. recent calls have a higher index)
+func (mmGet *mSolutionRepositoryMockGet) Calls() []*SolutionRepositoryMockGetParams {
+	mmGet.mutex.RLock()
+
+	argCopy := make([]*SolutionRepositoryMockGetParams, len(mmGet.callArgs))
+	copy(argCopy, mmGet.callArgs)
+
+	mmGet.mutex.RUnlock()
+
+	return argCopy
+}
+
+// MinimockGetDone returns true if the count of the Get invocations corresponds
+// the number of defined expectations
+func (m *SolutionRepositoryMock) MinimockGetDone() bool {
+	if m.GetMock.optional {
+		// Optional methods provide '0 or more' call count restriction.
+		return true
+	}
+
+	for _, e := range m.GetMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			return false
+		}
+	}
+
+	return m.GetMock.invocationsDone()
+}
+
+// MinimockGetInspect logs each unmet expectation
+func (m *SolutionRepositoryMock) MinimockGetInspect() {
+	for _, e := range m.GetMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			m.t.Errorf("Expected call to SolutionRepositoryMock.Get with params: %#v", *e.params)
+		}
+	}
+
+	afterGetCounter := mm_atomic.LoadUint64(&m.afterGetCounter)
+	// if default expectation was set then invocations count should be greater than zero
+	if m.GetMock.defaultExpectation != nil && afterGetCounter < 1 {
+		if m.GetMock.defaultExpectation.params == nil {
+			m.t.Error("Expected call to SolutionRepositoryMock.Get")
+		} else {
+			m.t.Errorf("Expected call to SolutionRepositoryMock.Get with params: %#v", *m.GetMock.defaultExpectation.params)
+		}
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcGet != nil && afterGetCounter < 1 {
+		m.t.Error("Expected call to SolutionRepositoryMock.Get")
+	}
+
+	if !m.GetMock.invocationsDone() && afterGetCounter > 0 {
+		m.t.Errorf("Expected %d calls to SolutionRepositoryMock.Get but found %d calls",
+			mm_atomic.LoadUint64(&m.GetMock.expectedInvocations), afterGetCounter)
+	}
 }
 
 type mSolutionRepositoryMockList struct {
@@ -339,6 +669,8 @@ func (m *SolutionRepositoryMock) MinimockListInspect() {
 func (m *SolutionRepositoryMock) MinimockFinish() {
 	m.finishOnce.Do(func() {
 		if !m.minimockDone() {
+			m.MinimockGetInspect()
+
 			m.MinimockListInspect()
 			m.t.FailNow()
 		}
@@ -364,5 +696,6 @@ func (m *SolutionRepositoryMock) MinimockWait(timeout mm_time.Duration) {
 func (m *SolutionRepositoryMock) minimockDone() bool {
 	done := true
 	return done &&
+		m.MinimockGetDone() &&
 		m.MinimockListDone()
 }
