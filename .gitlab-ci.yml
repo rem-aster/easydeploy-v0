@@ -40,6 +40,8 @@ unit:
 integration:
   stage: test
   image: $PYTHON_IMAGE
+  services:
+    - docker:dind
   before_script:
     - docker compose up -d --remove-orphans
     - pip install -r tests/requirements.txt
