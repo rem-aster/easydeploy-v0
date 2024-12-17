@@ -17,6 +17,7 @@ require (
 	github.com/prometheus/client_golang v1.20.2
 	github.com/rs/cors v1.11.0
 	github.com/s0vunia/platform_common v1.1.3
+	github.com/stretchr/testify v1.9.0
 	github.com/uber/jaeger-client-go v2.30.0+incompatible
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.26.0
@@ -49,7 +50,6 @@ require (
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.55.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
-	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/uber/jaeger-lib v2.4.1+incompatible // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
@@ -57,4 +57,5 @@ require (
 	golang.org/x/sys v0.23.0 // indirect
 	golang.org/x/text v0.17.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240723171418-e6d459c13d2a // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
