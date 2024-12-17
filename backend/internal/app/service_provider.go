@@ -12,12 +12,15 @@ import (
 	"go.uber.org/zap"
 
 	"gitlab.crja72.ru/gospec/go16/easydeploy/backend/internal/config/env"
+	deployRepository "gitlab.crja72.ru/gospec/go16/easydeploy/backend/internal/repository/deploy"
 	solutionRepository "gitlab.crja72.ru/gospec/go16/easydeploy/backend/internal/repository/solution"
 	solutionService "gitlab.crja72.ru/gospec/go16/easydeploy/backend/internal/service/solution"
 
 	"gitlab.crja72.ru/gospec/go16/easydeploy/backend/internal/config"
 	"gitlab.crja72.ru/gospec/go16/easydeploy/backend/internal/repository"
 	"gitlab.crja72.ru/gospec/go16/easydeploy/backend/internal/service"
+
+	"github.com/avast/retry-go"
 )
 
 type serviceProvider struct {
@@ -31,6 +34,7 @@ type serviceProvider struct {
 	txManager db.TxManager
 
 	solutionRepository repository.SolutionRepository
+	deployRepository   repository.DeployRepository
 
 	solutionService service.SolutionService
 
@@ -121,7 +125,19 @@ func (s *serviceProvider) LoggerConfig() config.LoggerConfig {
 
 func (s *serviceProvider) DBClient(ctx context.Context) db.Client {
 	if s.dbClient == nil {
-		cl, err := pg.New(ctx, s.PGConfig().DSN())
+		var cl db.Client
+		err := retry.Do(
+			func() error {
+				var err error
+				cl, err = pg.New(ctx, s.PGConfig().DSN())
+				return err
+			},
+			retry.Attempts(3),
+			retry.OnRetry(func(n uint, err error) {
+				logger.Info("Retrying request after error: %v",
+					zap.Error(err))
+			}),
+		)
 		if err != nil {
 			logger.Fatal(
 				"failed to get db client",
@@ -160,10 +176,19 @@ func (s *serviceProvider) SolutionRepository(ctx context.Context) repository.Sol
 	return s.solutionRepository
 }
 
+func (s *serviceProvider) DeployRepository(ctx context.Context) repository.DeployRepository {
+	if s.deployRepository == nil {
+		s.deployRepository = deployRepository.NewRepository(s.DBClient(ctx))
+	}
+
+	return s.deployRepository
+}
+
 func (s *serviceProvider) SolutionService(ctx context.Context) service.SolutionService {
 	if s.solutionService == nil {
 		s.solutionService = solutionService.NewService(
 			s.SolutionRepository(ctx),
+			s.DeployRepository(ctx),
 			s.TxManager(ctx),
 		)
 	}

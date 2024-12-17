@@ -19,23 +19,23 @@ type SolutionServiceMock struct {
 	t          minimock.Tester
 	finishOnce sync.Once
 
-	funcDeploy          func(ctx context.Context) (err error)
-	inspectFuncDeploy   func(ctx context.Context)
+	funcDeploy          func(ctx context.Context, deploy *model.Deploy) (i1 int64, err error)
+	inspectFuncDeploy   func(ctx context.Context, deploy *model.Deploy)
 	afterDeployCounter  uint64
 	beforeDeployCounter uint64
 	DeployMock          mSolutionServiceMockDeploy
+
+	funcDeployStatus          func(ctx context.Context) (err error)
+	inspectFuncDeployStatus   func(ctx context.Context)
+	afterDeployStatusCounter  uint64
+	beforeDeployStatusCounter uint64
+	DeployStatusMock          mSolutionServiceMockDeployStatus
 
 	funcList          func(ctx context.Context) (spa1 []*model.Solution, err error)
 	inspectFuncList   func(ctx context.Context)
 	afterListCounter  uint64
 	beforeListCounter uint64
 	ListMock          mSolutionServiceMockList
-
-	funcStatus          func(ctx context.Context) (err error)
-	inspectFuncStatus   func(ctx context.Context)
-	afterStatusCounter  uint64
-	beforeStatusCounter uint64
-	StatusMock          mSolutionServiceMockStatus
 }
 
 // NewSolutionServiceMock returns a mock for service.SolutionService
@@ -49,11 +49,11 @@ func NewSolutionServiceMock(t minimock.Tester) *SolutionServiceMock {
 	m.DeployMock = mSolutionServiceMockDeploy{mock: m}
 	m.DeployMock.callArgs = []*SolutionServiceMockDeployParams{}
 
+	m.DeployStatusMock = mSolutionServiceMockDeployStatus{mock: m}
+	m.DeployStatusMock.callArgs = []*SolutionServiceMockDeployStatusParams{}
+
 	m.ListMock = mSolutionServiceMockList{mock: m}
 	m.ListMock.callArgs = []*SolutionServiceMockListParams{}
-
-	m.StatusMock = mSolutionServiceMockStatus{mock: m}
-	m.StatusMock.callArgs = []*SolutionServiceMockStatusParams{}
 
 	t.Cleanup(m.MinimockFinish)
 
@@ -83,16 +83,19 @@ type SolutionServiceMockDeployExpectation struct {
 
 // SolutionServiceMockDeployParams contains parameters of the SolutionService.Deploy
 type SolutionServiceMockDeployParams struct {
-	ctx context.Context
+	ctx    context.Context
+	deploy *model.Deploy
 }
 
 // SolutionServiceMockDeployParamPtrs contains pointers to parameters of the SolutionService.Deploy
 type SolutionServiceMockDeployParamPtrs struct {
-	ctx *context.Context
+	ctx    *context.Context
+	deploy **model.Deploy
 }
 
 // SolutionServiceMockDeployResults contains results of the SolutionService.Deploy
 type SolutionServiceMockDeployResults struct {
+	i1  int64
 	err error
 }
 
@@ -107,7 +110,7 @@ func (mmDeploy *mSolutionServiceMockDeploy) Optional() *mSolutionServiceMockDepl
 }
 
 // Expect sets up expected params for SolutionService.Deploy
-func (mmDeploy *mSolutionServiceMockDeploy) Expect(ctx context.Context) *mSolutionServiceMockDeploy {
+func (mmDeploy *mSolutionServiceMockDeploy) Expect(ctx context.Context, deploy *model.Deploy) *mSolutionServiceMockDeploy {
 	if mmDeploy.mock.funcDeploy != nil {
 		mmDeploy.mock.t.Fatalf("SolutionServiceMock.Deploy mock is already set by Set")
 	}
@@ -120,7 +123,7 @@ func (mmDeploy *mSolutionServiceMockDeploy) Expect(ctx context.Context) *mSoluti
 		mmDeploy.mock.t.Fatalf("SolutionServiceMock.Deploy mock is already set by ExpectParams functions")
 	}
 
-	mmDeploy.defaultExpectation.params = &SolutionServiceMockDeployParams{ctx}
+	mmDeploy.defaultExpectation.params = &SolutionServiceMockDeployParams{ctx, deploy}
 	for _, e := range mmDeploy.expectations {
 		if minimock.Equal(e.params, mmDeploy.defaultExpectation.params) {
 			mmDeploy.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmDeploy.defaultExpectation.params)
@@ -152,8 +155,30 @@ func (mmDeploy *mSolutionServiceMockDeploy) ExpectCtxParam1(ctx context.Context)
 	return mmDeploy
 }
 
+// ExpectDeployParam2 sets up expected param deploy for SolutionService.Deploy
+func (mmDeploy *mSolutionServiceMockDeploy) ExpectDeployParam2(deploy *model.Deploy) *mSolutionServiceMockDeploy {
+	if mmDeploy.mock.funcDeploy != nil {
+		mmDeploy.mock.t.Fatalf("SolutionServiceMock.Deploy mock is already set by Set")
+	}
+
+	if mmDeploy.defaultExpectation == nil {
+		mmDeploy.defaultExpectation = &SolutionServiceMockDeployExpectation{}
+	}
+
+	if mmDeploy.defaultExpectation.params != nil {
+		mmDeploy.mock.t.Fatalf("SolutionServiceMock.Deploy mock is already set by Expect")
+	}
+
+	if mmDeploy.defaultExpectation.paramPtrs == nil {
+		mmDeploy.defaultExpectation.paramPtrs = &SolutionServiceMockDeployParamPtrs{}
+	}
+	mmDeploy.defaultExpectation.paramPtrs.deploy = &deploy
+
+	return mmDeploy
+}
+
 // Inspect accepts an inspector function that has same arguments as the SolutionService.Deploy
-func (mmDeploy *mSolutionServiceMockDeploy) Inspect(f func(ctx context.Context)) *mSolutionServiceMockDeploy {
+func (mmDeploy *mSolutionServiceMockDeploy) Inspect(f func(ctx context.Context, deploy *model.Deploy)) *mSolutionServiceMockDeploy {
 	if mmDeploy.mock.inspectFuncDeploy != nil {
 		mmDeploy.mock.t.Fatalf("Inspect function is already set for SolutionServiceMock.Deploy")
 	}
@@ -164,7 +189,7 @@ func (mmDeploy *mSolutionServiceMockDeploy) Inspect(f func(ctx context.Context))
 }
 
 // Return sets up results that will be returned by SolutionService.Deploy
-func (mmDeploy *mSolutionServiceMockDeploy) Return(err error) *SolutionServiceMock {
+func (mmDeploy *mSolutionServiceMockDeploy) Return(i1 int64, err error) *SolutionServiceMock {
 	if mmDeploy.mock.funcDeploy != nil {
 		mmDeploy.mock.t.Fatalf("SolutionServiceMock.Deploy mock is already set by Set")
 	}
@@ -172,12 +197,12 @@ func (mmDeploy *mSolutionServiceMockDeploy) Return(err error) *SolutionServiceMo
 	if mmDeploy.defaultExpectation == nil {
 		mmDeploy.defaultExpectation = &SolutionServiceMockDeployExpectation{mock: mmDeploy.mock}
 	}
-	mmDeploy.defaultExpectation.results = &SolutionServiceMockDeployResults{err}
+	mmDeploy.defaultExpectation.results = &SolutionServiceMockDeployResults{i1, err}
 	return mmDeploy.mock
 }
 
 // Set uses given function f to mock the SolutionService.Deploy method
-func (mmDeploy *mSolutionServiceMockDeploy) Set(f func(ctx context.Context) (err error)) *SolutionServiceMock {
+func (mmDeploy *mSolutionServiceMockDeploy) Set(f func(ctx context.Context, deploy *model.Deploy) (i1 int64, err error)) *SolutionServiceMock {
 	if mmDeploy.defaultExpectation != nil {
 		mmDeploy.mock.t.Fatalf("Default expectation is already set for the SolutionService.Deploy method")
 	}
@@ -192,22 +217,22 @@ func (mmDeploy *mSolutionServiceMockDeploy) Set(f func(ctx context.Context) (err
 
 // When sets expectation for the SolutionService.Deploy which will trigger the result defined by the following
 // Then helper
-func (mmDeploy *mSolutionServiceMockDeploy) When(ctx context.Context) *SolutionServiceMockDeployExpectation {
+func (mmDeploy *mSolutionServiceMockDeploy) When(ctx context.Context, deploy *model.Deploy) *SolutionServiceMockDeployExpectation {
 	if mmDeploy.mock.funcDeploy != nil {
 		mmDeploy.mock.t.Fatalf("SolutionServiceMock.Deploy mock is already set by Set")
 	}
 
 	expectation := &SolutionServiceMockDeployExpectation{
 		mock:   mmDeploy.mock,
-		params: &SolutionServiceMockDeployParams{ctx},
+		params: &SolutionServiceMockDeployParams{ctx, deploy},
 	}
 	mmDeploy.expectations = append(mmDeploy.expectations, expectation)
 	return expectation
 }
 
 // Then sets up SolutionService.Deploy return parameters for the expectation previously defined by the When method
-func (e *SolutionServiceMockDeployExpectation) Then(err error) *SolutionServiceMock {
-	e.results = &SolutionServiceMockDeployResults{err}
+func (e *SolutionServiceMockDeployExpectation) Then(i1 int64, err error) *SolutionServiceMock {
+	e.results = &SolutionServiceMockDeployResults{i1, err}
 	return e.mock
 }
 
@@ -232,15 +257,15 @@ func (mmDeploy *mSolutionServiceMockDeploy) invocationsDone() bool {
 }
 
 // Deploy implements service.SolutionService
-func (mmDeploy *SolutionServiceMock) Deploy(ctx context.Context) (err error) {
+func (mmDeploy *SolutionServiceMock) Deploy(ctx context.Context, deploy *model.Deploy) (i1 int64, err error) {
 	mm_atomic.AddUint64(&mmDeploy.beforeDeployCounter, 1)
 	defer mm_atomic.AddUint64(&mmDeploy.afterDeployCounter, 1)
 
 	if mmDeploy.inspectFuncDeploy != nil {
-		mmDeploy.inspectFuncDeploy(ctx)
+		mmDeploy.inspectFuncDeploy(ctx, deploy)
 	}
 
-	mm_params := SolutionServiceMockDeployParams{ctx}
+	mm_params := SolutionServiceMockDeployParams{ctx, deploy}
 
 	// Record call args
 	mmDeploy.DeployMock.mutex.Lock()
@@ -250,7 +275,7 @@ func (mmDeploy *SolutionServiceMock) Deploy(ctx context.Context) (err error) {
 	for _, e := range mmDeploy.DeployMock.expectations {
 		if minimock.Equal(*e.params, mm_params) {
 			mm_atomic.AddUint64(&e.Counter, 1)
-			return e.results.err
+			return e.results.i1, e.results.err
 		}
 	}
 
@@ -259,12 +284,16 @@ func (mmDeploy *SolutionServiceMock) Deploy(ctx context.Context) (err error) {
 		mm_want := mmDeploy.DeployMock.defaultExpectation.params
 		mm_want_ptrs := mmDeploy.DeployMock.defaultExpectation.paramPtrs
 
-		mm_got := SolutionServiceMockDeployParams{ctx}
+		mm_got := SolutionServiceMockDeployParams{ctx, deploy}
 
 		if mm_want_ptrs != nil {
 
 			if mm_want_ptrs.ctx != nil && !minimock.Equal(*mm_want_ptrs.ctx, mm_got.ctx) {
 				mmDeploy.t.Errorf("SolutionServiceMock.Deploy got unexpected parameter ctx, want: %#v, got: %#v%s\n", *mm_want_ptrs.ctx, mm_got.ctx, minimock.Diff(*mm_want_ptrs.ctx, mm_got.ctx))
+			}
+
+			if mm_want_ptrs.deploy != nil && !minimock.Equal(*mm_want_ptrs.deploy, mm_got.deploy) {
+				mmDeploy.t.Errorf("SolutionServiceMock.Deploy got unexpected parameter deploy, want: %#v, got: %#v%s\n", *mm_want_ptrs.deploy, mm_got.deploy, minimock.Diff(*mm_want_ptrs.deploy, mm_got.deploy))
 			}
 
 		} else if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
@@ -275,12 +304,12 @@ func (mmDeploy *SolutionServiceMock) Deploy(ctx context.Context) (err error) {
 		if mm_results == nil {
 			mmDeploy.t.Fatal("No results are set for the SolutionServiceMock.Deploy")
 		}
-		return (*mm_results).err
+		return (*mm_results).i1, (*mm_results).err
 	}
 	if mmDeploy.funcDeploy != nil {
-		return mmDeploy.funcDeploy(ctx)
+		return mmDeploy.funcDeploy(ctx, deploy)
 	}
-	mmDeploy.t.Fatalf("Unexpected call to SolutionServiceMock.Deploy. %v", ctx)
+	mmDeploy.t.Fatalf("Unexpected call to SolutionServiceMock.Deploy. %v %v", ctx, deploy)
 	return
 }
 
@@ -349,6 +378,298 @@ func (m *SolutionServiceMock) MinimockDeployInspect() {
 	if !m.DeployMock.invocationsDone() && afterDeployCounter > 0 {
 		m.t.Errorf("Expected %d calls to SolutionServiceMock.Deploy but found %d calls",
 			mm_atomic.LoadUint64(&m.DeployMock.expectedInvocations), afterDeployCounter)
+	}
+}
+
+type mSolutionServiceMockDeployStatus struct {
+	optional           bool
+	mock               *SolutionServiceMock
+	defaultExpectation *SolutionServiceMockDeployStatusExpectation
+	expectations       []*SolutionServiceMockDeployStatusExpectation
+
+	callArgs []*SolutionServiceMockDeployStatusParams
+	mutex    sync.RWMutex
+
+	expectedInvocations uint64
+}
+
+// SolutionServiceMockDeployStatusExpectation specifies expectation struct of the SolutionService.DeployStatus
+type SolutionServiceMockDeployStatusExpectation struct {
+	mock      *SolutionServiceMock
+	params    *SolutionServiceMockDeployStatusParams
+	paramPtrs *SolutionServiceMockDeployStatusParamPtrs
+	results   *SolutionServiceMockDeployStatusResults
+	Counter   uint64
+}
+
+// SolutionServiceMockDeployStatusParams contains parameters of the SolutionService.DeployStatus
+type SolutionServiceMockDeployStatusParams struct {
+	ctx context.Context
+}
+
+// SolutionServiceMockDeployStatusParamPtrs contains pointers to parameters of the SolutionService.DeployStatus
+type SolutionServiceMockDeployStatusParamPtrs struct {
+	ctx *context.Context
+}
+
+// SolutionServiceMockDeployStatusResults contains results of the SolutionService.DeployStatus
+type SolutionServiceMockDeployStatusResults struct {
+	err error
+}
+
+// Marks this method to be optional. The default behavior of any method with Return() is '1 or more', meaning
+// the test will fail minimock's automatic final call check if the mocked method was not called at least once.
+// Optional() makes method check to work in '0 or more' mode.
+// It is NOT RECOMMENDED to use this option by default unless you really need it, as it helps to
+// catch the problems when the expected method call is totally skipped during test run.
+func (mmDeployStatus *mSolutionServiceMockDeployStatus) Optional() *mSolutionServiceMockDeployStatus {
+	mmDeployStatus.optional = true
+	return mmDeployStatus
+}
+
+// Expect sets up expected params for SolutionService.DeployStatus
+func (mmDeployStatus *mSolutionServiceMockDeployStatus) Expect(ctx context.Context) *mSolutionServiceMockDeployStatus {
+	if mmDeployStatus.mock.funcDeployStatus != nil {
+		mmDeployStatus.mock.t.Fatalf("SolutionServiceMock.DeployStatus mock is already set by Set")
+	}
+
+	if mmDeployStatus.defaultExpectation == nil {
+		mmDeployStatus.defaultExpectation = &SolutionServiceMockDeployStatusExpectation{}
+	}
+
+	if mmDeployStatus.defaultExpectation.paramPtrs != nil {
+		mmDeployStatus.mock.t.Fatalf("SolutionServiceMock.DeployStatus mock is already set by ExpectParams functions")
+	}
+
+	mmDeployStatus.defaultExpectation.params = &SolutionServiceMockDeployStatusParams{ctx}
+	for _, e := range mmDeployStatus.expectations {
+		if minimock.Equal(e.params, mmDeployStatus.defaultExpectation.params) {
+			mmDeployStatus.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmDeployStatus.defaultExpectation.params)
+		}
+	}
+
+	return mmDeployStatus
+}
+
+// ExpectCtxParam1 sets up expected param ctx for SolutionService.DeployStatus
+func (mmDeployStatus *mSolutionServiceMockDeployStatus) ExpectCtxParam1(ctx context.Context) *mSolutionServiceMockDeployStatus {
+	if mmDeployStatus.mock.funcDeployStatus != nil {
+		mmDeployStatus.mock.t.Fatalf("SolutionServiceMock.DeployStatus mock is already set by Set")
+	}
+
+	if mmDeployStatus.defaultExpectation == nil {
+		mmDeployStatus.defaultExpectation = &SolutionServiceMockDeployStatusExpectation{}
+	}
+
+	if mmDeployStatus.defaultExpectation.params != nil {
+		mmDeployStatus.mock.t.Fatalf("SolutionServiceMock.DeployStatus mock is already set by Expect")
+	}
+
+	if mmDeployStatus.defaultExpectation.paramPtrs == nil {
+		mmDeployStatus.defaultExpectation.paramPtrs = &SolutionServiceMockDeployStatusParamPtrs{}
+	}
+	mmDeployStatus.defaultExpectation.paramPtrs.ctx = &ctx
+
+	return mmDeployStatus
+}
+
+// Inspect accepts an inspector function that has same arguments as the SolutionService.DeployStatus
+func (mmDeployStatus *mSolutionServiceMockDeployStatus) Inspect(f func(ctx context.Context)) *mSolutionServiceMockDeployStatus {
+	if mmDeployStatus.mock.inspectFuncDeployStatus != nil {
+		mmDeployStatus.mock.t.Fatalf("Inspect function is already set for SolutionServiceMock.DeployStatus")
+	}
+
+	mmDeployStatus.mock.inspectFuncDeployStatus = f
+
+	return mmDeployStatus
+}
+
+// Return sets up results that will be returned by SolutionService.DeployStatus
+func (mmDeployStatus *mSolutionServiceMockDeployStatus) Return(err error) *SolutionServiceMock {
+	if mmDeployStatus.mock.funcDeployStatus != nil {
+		mmDeployStatus.mock.t.Fatalf("SolutionServiceMock.DeployStatus mock is already set by Set")
+	}
+
+	if mmDeployStatus.defaultExpectation == nil {
+		mmDeployStatus.defaultExpectation = &SolutionServiceMockDeployStatusExpectation{mock: mmDeployStatus.mock}
+	}
+	mmDeployStatus.defaultExpectation.results = &SolutionServiceMockDeployStatusResults{err}
+	return mmDeployStatus.mock
+}
+
+// Set uses given function f to mock the SolutionService.DeployStatus method
+func (mmDeployStatus *mSolutionServiceMockDeployStatus) Set(f func(ctx context.Context) (err error)) *SolutionServiceMock {
+	if mmDeployStatus.defaultExpectation != nil {
+		mmDeployStatus.mock.t.Fatalf("Default expectation is already set for the SolutionService.DeployStatus method")
+	}
+
+	if len(mmDeployStatus.expectations) > 0 {
+		mmDeployStatus.mock.t.Fatalf("Some expectations are already set for the SolutionService.DeployStatus method")
+	}
+
+	mmDeployStatus.mock.funcDeployStatus = f
+	return mmDeployStatus.mock
+}
+
+// When sets expectation for the SolutionService.DeployStatus which will trigger the result defined by the following
+// Then helper
+func (mmDeployStatus *mSolutionServiceMockDeployStatus) When(ctx context.Context) *SolutionServiceMockDeployStatusExpectation {
+	if mmDeployStatus.mock.funcDeployStatus != nil {
+		mmDeployStatus.mock.t.Fatalf("SolutionServiceMock.DeployStatus mock is already set by Set")
+	}
+
+	expectation := &SolutionServiceMockDeployStatusExpectation{
+		mock:   mmDeployStatus.mock,
+		params: &SolutionServiceMockDeployStatusParams{ctx},
+	}
+	mmDeployStatus.expectations = append(mmDeployStatus.expectations, expectation)
+	return expectation
+}
+
+// Then sets up SolutionService.DeployStatus return parameters for the expectation previously defined by the When method
+func (e *SolutionServiceMockDeployStatusExpectation) Then(err error) *SolutionServiceMock {
+	e.results = &SolutionServiceMockDeployStatusResults{err}
+	return e.mock
+}
+
+// Times sets number of times SolutionService.DeployStatus should be invoked
+func (mmDeployStatus *mSolutionServiceMockDeployStatus) Times(n uint64) *mSolutionServiceMockDeployStatus {
+	if n == 0 {
+		mmDeployStatus.mock.t.Fatalf("Times of SolutionServiceMock.DeployStatus mock can not be zero")
+	}
+	mm_atomic.StoreUint64(&mmDeployStatus.expectedInvocations, n)
+	return mmDeployStatus
+}
+
+func (mmDeployStatus *mSolutionServiceMockDeployStatus) invocationsDone() bool {
+	if len(mmDeployStatus.expectations) == 0 && mmDeployStatus.defaultExpectation == nil && mmDeployStatus.mock.funcDeployStatus == nil {
+		return true
+	}
+
+	totalInvocations := mm_atomic.LoadUint64(&mmDeployStatus.mock.afterDeployStatusCounter)
+	expectedInvocations := mm_atomic.LoadUint64(&mmDeployStatus.expectedInvocations)
+
+	return totalInvocations > 0 && (expectedInvocations == 0 || expectedInvocations == totalInvocations)
+}
+
+// DeployStatus implements service.SolutionService
+func (mmDeployStatus *SolutionServiceMock) DeployStatus(ctx context.Context) (err error) {
+	mm_atomic.AddUint64(&mmDeployStatus.beforeDeployStatusCounter, 1)
+	defer mm_atomic.AddUint64(&mmDeployStatus.afterDeployStatusCounter, 1)
+
+	if mmDeployStatus.inspectFuncDeployStatus != nil {
+		mmDeployStatus.inspectFuncDeployStatus(ctx)
+	}
+
+	mm_params := SolutionServiceMockDeployStatusParams{ctx}
+
+	// Record call args
+	mmDeployStatus.DeployStatusMock.mutex.Lock()
+	mmDeployStatus.DeployStatusMock.callArgs = append(mmDeployStatus.DeployStatusMock.callArgs, &mm_params)
+	mmDeployStatus.DeployStatusMock.mutex.Unlock()
+
+	for _, e := range mmDeployStatus.DeployStatusMock.expectations {
+		if minimock.Equal(*e.params, mm_params) {
+			mm_atomic.AddUint64(&e.Counter, 1)
+			return e.results.err
+		}
+	}
+
+	if mmDeployStatus.DeployStatusMock.defaultExpectation != nil {
+		mm_atomic.AddUint64(&mmDeployStatus.DeployStatusMock.defaultExpectation.Counter, 1)
+		mm_want := mmDeployStatus.DeployStatusMock.defaultExpectation.params
+		mm_want_ptrs := mmDeployStatus.DeployStatusMock.defaultExpectation.paramPtrs
+
+		mm_got := SolutionServiceMockDeployStatusParams{ctx}
+
+		if mm_want_ptrs != nil {
+
+			if mm_want_ptrs.ctx != nil && !minimock.Equal(*mm_want_ptrs.ctx, mm_got.ctx) {
+				mmDeployStatus.t.Errorf("SolutionServiceMock.DeployStatus got unexpected parameter ctx, want: %#v, got: %#v%s\n", *mm_want_ptrs.ctx, mm_got.ctx, minimock.Diff(*mm_want_ptrs.ctx, mm_got.ctx))
+			}
+
+		} else if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
+			mmDeployStatus.t.Errorf("SolutionServiceMock.DeployStatus got unexpected parameters, want: %#v, got: %#v%s\n", *mm_want, mm_got, minimock.Diff(*mm_want, mm_got))
+		}
+
+		mm_results := mmDeployStatus.DeployStatusMock.defaultExpectation.results
+		if mm_results == nil {
+			mmDeployStatus.t.Fatal("No results are set for the SolutionServiceMock.DeployStatus")
+		}
+		return (*mm_results).err
+	}
+	if mmDeployStatus.funcDeployStatus != nil {
+		return mmDeployStatus.funcDeployStatus(ctx)
+	}
+	mmDeployStatus.t.Fatalf("Unexpected call to SolutionServiceMock.DeployStatus. %v", ctx)
+	return
+}
+
+// DeployStatusAfterCounter returns a count of finished SolutionServiceMock.DeployStatus invocations
+func (mmDeployStatus *SolutionServiceMock) DeployStatusAfterCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmDeployStatus.afterDeployStatusCounter)
+}
+
+// DeployStatusBeforeCounter returns a count of SolutionServiceMock.DeployStatus invocations
+func (mmDeployStatus *SolutionServiceMock) DeployStatusBeforeCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmDeployStatus.beforeDeployStatusCounter)
+}
+
+// Calls returns a list of arguments used in each call to SolutionServiceMock.DeployStatus.
+// The list is in the same order as the calls were made (i.e. recent calls have a higher index)
+func (mmDeployStatus *mSolutionServiceMockDeployStatus) Calls() []*SolutionServiceMockDeployStatusParams {
+	mmDeployStatus.mutex.RLock()
+
+	argCopy := make([]*SolutionServiceMockDeployStatusParams, len(mmDeployStatus.callArgs))
+	copy(argCopy, mmDeployStatus.callArgs)
+
+	mmDeployStatus.mutex.RUnlock()
+
+	return argCopy
+}
+
+// MinimockDeployStatusDone returns true if the count of the DeployStatus invocations corresponds
+// the number of defined expectations
+func (m *SolutionServiceMock) MinimockDeployStatusDone() bool {
+	if m.DeployStatusMock.optional {
+		// Optional methods provide '0 or more' call count restriction.
+		return true
+	}
+
+	for _, e := range m.DeployStatusMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			return false
+		}
+	}
+
+	return m.DeployStatusMock.invocationsDone()
+}
+
+// MinimockDeployStatusInspect logs each unmet expectation
+func (m *SolutionServiceMock) MinimockDeployStatusInspect() {
+	for _, e := range m.DeployStatusMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			m.t.Errorf("Expected call to SolutionServiceMock.DeployStatus with params: %#v", *e.params)
+		}
+	}
+
+	afterDeployStatusCounter := mm_atomic.LoadUint64(&m.afterDeployStatusCounter)
+	// if default expectation was set then invocations count should be greater than zero
+	if m.DeployStatusMock.defaultExpectation != nil && afterDeployStatusCounter < 1 {
+		if m.DeployStatusMock.defaultExpectation.params == nil {
+			m.t.Error("Expected call to SolutionServiceMock.DeployStatus")
+		} else {
+			m.t.Errorf("Expected call to SolutionServiceMock.DeployStatus with params: %#v", *m.DeployStatusMock.defaultExpectation.params)
+		}
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcDeployStatus != nil && afterDeployStatusCounter < 1 {
+		m.t.Error("Expected call to SolutionServiceMock.DeployStatus")
+	}
+
+	if !m.DeployStatusMock.invocationsDone() && afterDeployStatusCounter > 0 {
+		m.t.Errorf("Expected %d calls to SolutionServiceMock.DeployStatus but found %d calls",
+			mm_atomic.LoadUint64(&m.DeployStatusMock.expectedInvocations), afterDeployStatusCounter)
 	}
 }
 
@@ -645,307 +966,15 @@ func (m *SolutionServiceMock) MinimockListInspect() {
 	}
 }
 
-type mSolutionServiceMockStatus struct {
-	optional           bool
-	mock               *SolutionServiceMock
-	defaultExpectation *SolutionServiceMockStatusExpectation
-	expectations       []*SolutionServiceMockStatusExpectation
-
-	callArgs []*SolutionServiceMockStatusParams
-	mutex    sync.RWMutex
-
-	expectedInvocations uint64
-}
-
-// SolutionServiceMockStatusExpectation specifies expectation struct of the SolutionService.Status
-type SolutionServiceMockStatusExpectation struct {
-	mock      *SolutionServiceMock
-	params    *SolutionServiceMockStatusParams
-	paramPtrs *SolutionServiceMockStatusParamPtrs
-	results   *SolutionServiceMockStatusResults
-	Counter   uint64
-}
-
-// SolutionServiceMockStatusParams contains parameters of the SolutionService.Status
-type SolutionServiceMockStatusParams struct {
-	ctx context.Context
-}
-
-// SolutionServiceMockStatusParamPtrs contains pointers to parameters of the SolutionService.Status
-type SolutionServiceMockStatusParamPtrs struct {
-	ctx *context.Context
-}
-
-// SolutionServiceMockStatusResults contains results of the SolutionService.Status
-type SolutionServiceMockStatusResults struct {
-	err error
-}
-
-// Marks this method to be optional. The default behavior of any method with Return() is '1 or more', meaning
-// the test will fail minimock's automatic final call check if the mocked method was not called at least once.
-// Optional() makes method check to work in '0 or more' mode.
-// It is NOT RECOMMENDED to use this option by default unless you really need it, as it helps to
-// catch the problems when the expected method call is totally skipped during test run.
-func (mmStatus *mSolutionServiceMockStatus) Optional() *mSolutionServiceMockStatus {
-	mmStatus.optional = true
-	return mmStatus
-}
-
-// Expect sets up expected params for SolutionService.Status
-func (mmStatus *mSolutionServiceMockStatus) Expect(ctx context.Context) *mSolutionServiceMockStatus {
-	if mmStatus.mock.funcStatus != nil {
-		mmStatus.mock.t.Fatalf("SolutionServiceMock.Status mock is already set by Set")
-	}
-
-	if mmStatus.defaultExpectation == nil {
-		mmStatus.defaultExpectation = &SolutionServiceMockStatusExpectation{}
-	}
-
-	if mmStatus.defaultExpectation.paramPtrs != nil {
-		mmStatus.mock.t.Fatalf("SolutionServiceMock.Status mock is already set by ExpectParams functions")
-	}
-
-	mmStatus.defaultExpectation.params = &SolutionServiceMockStatusParams{ctx}
-	for _, e := range mmStatus.expectations {
-		if minimock.Equal(e.params, mmStatus.defaultExpectation.params) {
-			mmStatus.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmStatus.defaultExpectation.params)
-		}
-	}
-
-	return mmStatus
-}
-
-// ExpectCtxParam1 sets up expected param ctx for SolutionService.Status
-func (mmStatus *mSolutionServiceMockStatus) ExpectCtxParam1(ctx context.Context) *mSolutionServiceMockStatus {
-	if mmStatus.mock.funcStatus != nil {
-		mmStatus.mock.t.Fatalf("SolutionServiceMock.Status mock is already set by Set")
-	}
-
-	if mmStatus.defaultExpectation == nil {
-		mmStatus.defaultExpectation = &SolutionServiceMockStatusExpectation{}
-	}
-
-	if mmStatus.defaultExpectation.params != nil {
-		mmStatus.mock.t.Fatalf("SolutionServiceMock.Status mock is already set by Expect")
-	}
-
-	if mmStatus.defaultExpectation.paramPtrs == nil {
-		mmStatus.defaultExpectation.paramPtrs = &SolutionServiceMockStatusParamPtrs{}
-	}
-	mmStatus.defaultExpectation.paramPtrs.ctx = &ctx
-
-	return mmStatus
-}
-
-// Inspect accepts an inspector function that has same arguments as the SolutionService.Status
-func (mmStatus *mSolutionServiceMockStatus) Inspect(f func(ctx context.Context)) *mSolutionServiceMockStatus {
-	if mmStatus.mock.inspectFuncStatus != nil {
-		mmStatus.mock.t.Fatalf("Inspect function is already set for SolutionServiceMock.Status")
-	}
-
-	mmStatus.mock.inspectFuncStatus = f
-
-	return mmStatus
-}
-
-// Return sets up results that will be returned by SolutionService.Status
-func (mmStatus *mSolutionServiceMockStatus) Return(err error) *SolutionServiceMock {
-	if mmStatus.mock.funcStatus != nil {
-		mmStatus.mock.t.Fatalf("SolutionServiceMock.Status mock is already set by Set")
-	}
-
-	if mmStatus.defaultExpectation == nil {
-		mmStatus.defaultExpectation = &SolutionServiceMockStatusExpectation{mock: mmStatus.mock}
-	}
-	mmStatus.defaultExpectation.results = &SolutionServiceMockStatusResults{err}
-	return mmStatus.mock
-}
-
-// Set uses given function f to mock the SolutionService.Status method
-func (mmStatus *mSolutionServiceMockStatus) Set(f func(ctx context.Context) (err error)) *SolutionServiceMock {
-	if mmStatus.defaultExpectation != nil {
-		mmStatus.mock.t.Fatalf("Default expectation is already set for the SolutionService.Status method")
-	}
-
-	if len(mmStatus.expectations) > 0 {
-		mmStatus.mock.t.Fatalf("Some expectations are already set for the SolutionService.Status method")
-	}
-
-	mmStatus.mock.funcStatus = f
-	return mmStatus.mock
-}
-
-// When sets expectation for the SolutionService.Status which will trigger the result defined by the following
-// Then helper
-func (mmStatus *mSolutionServiceMockStatus) When(ctx context.Context) *SolutionServiceMockStatusExpectation {
-	if mmStatus.mock.funcStatus != nil {
-		mmStatus.mock.t.Fatalf("SolutionServiceMock.Status mock is already set by Set")
-	}
-
-	expectation := &SolutionServiceMockStatusExpectation{
-		mock:   mmStatus.mock,
-		params: &SolutionServiceMockStatusParams{ctx},
-	}
-	mmStatus.expectations = append(mmStatus.expectations, expectation)
-	return expectation
-}
-
-// Then sets up SolutionService.Status return parameters for the expectation previously defined by the When method
-func (e *SolutionServiceMockStatusExpectation) Then(err error) *SolutionServiceMock {
-	e.results = &SolutionServiceMockStatusResults{err}
-	return e.mock
-}
-
-// Times sets number of times SolutionService.Status should be invoked
-func (mmStatus *mSolutionServiceMockStatus) Times(n uint64) *mSolutionServiceMockStatus {
-	if n == 0 {
-		mmStatus.mock.t.Fatalf("Times of SolutionServiceMock.Status mock can not be zero")
-	}
-	mm_atomic.StoreUint64(&mmStatus.expectedInvocations, n)
-	return mmStatus
-}
-
-func (mmStatus *mSolutionServiceMockStatus) invocationsDone() bool {
-	if len(mmStatus.expectations) == 0 && mmStatus.defaultExpectation == nil && mmStatus.mock.funcStatus == nil {
-		return true
-	}
-
-	totalInvocations := mm_atomic.LoadUint64(&mmStatus.mock.afterStatusCounter)
-	expectedInvocations := mm_atomic.LoadUint64(&mmStatus.expectedInvocations)
-
-	return totalInvocations > 0 && (expectedInvocations == 0 || expectedInvocations == totalInvocations)
-}
-
-// Status implements service.SolutionService
-func (mmStatus *SolutionServiceMock) Status(ctx context.Context) (err error) {
-	mm_atomic.AddUint64(&mmStatus.beforeStatusCounter, 1)
-	defer mm_atomic.AddUint64(&mmStatus.afterStatusCounter, 1)
-
-	if mmStatus.inspectFuncStatus != nil {
-		mmStatus.inspectFuncStatus(ctx)
-	}
-
-	mm_params := SolutionServiceMockStatusParams{ctx}
-
-	// Record call args
-	mmStatus.StatusMock.mutex.Lock()
-	mmStatus.StatusMock.callArgs = append(mmStatus.StatusMock.callArgs, &mm_params)
-	mmStatus.StatusMock.mutex.Unlock()
-
-	for _, e := range mmStatus.StatusMock.expectations {
-		if minimock.Equal(*e.params, mm_params) {
-			mm_atomic.AddUint64(&e.Counter, 1)
-			return e.results.err
-		}
-	}
-
-	if mmStatus.StatusMock.defaultExpectation != nil {
-		mm_atomic.AddUint64(&mmStatus.StatusMock.defaultExpectation.Counter, 1)
-		mm_want := mmStatus.StatusMock.defaultExpectation.params
-		mm_want_ptrs := mmStatus.StatusMock.defaultExpectation.paramPtrs
-
-		mm_got := SolutionServiceMockStatusParams{ctx}
-
-		if mm_want_ptrs != nil {
-
-			if mm_want_ptrs.ctx != nil && !minimock.Equal(*mm_want_ptrs.ctx, mm_got.ctx) {
-				mmStatus.t.Errorf("SolutionServiceMock.Status got unexpected parameter ctx, want: %#v, got: %#v%s\n", *mm_want_ptrs.ctx, mm_got.ctx, minimock.Diff(*mm_want_ptrs.ctx, mm_got.ctx))
-			}
-
-		} else if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
-			mmStatus.t.Errorf("SolutionServiceMock.Status got unexpected parameters, want: %#v, got: %#v%s\n", *mm_want, mm_got, minimock.Diff(*mm_want, mm_got))
-		}
-
-		mm_results := mmStatus.StatusMock.defaultExpectation.results
-		if mm_results == nil {
-			mmStatus.t.Fatal("No results are set for the SolutionServiceMock.Status")
-		}
-		return (*mm_results).err
-	}
-	if mmStatus.funcStatus != nil {
-		return mmStatus.funcStatus(ctx)
-	}
-	mmStatus.t.Fatalf("Unexpected call to SolutionServiceMock.Status. %v", ctx)
-	return
-}
-
-// StatusAfterCounter returns a count of finished SolutionServiceMock.Status invocations
-func (mmStatus *SolutionServiceMock) StatusAfterCounter() uint64 {
-	return mm_atomic.LoadUint64(&mmStatus.afterStatusCounter)
-}
-
-// StatusBeforeCounter returns a count of SolutionServiceMock.Status invocations
-func (mmStatus *SolutionServiceMock) StatusBeforeCounter() uint64 {
-	return mm_atomic.LoadUint64(&mmStatus.beforeStatusCounter)
-}
-
-// Calls returns a list of arguments used in each call to SolutionServiceMock.Status.
-// The list is in the same order as the calls were made (i.e. recent calls have a higher index)
-func (mmStatus *mSolutionServiceMockStatus) Calls() []*SolutionServiceMockStatusParams {
-	mmStatus.mutex.RLock()
-
-	argCopy := make([]*SolutionServiceMockStatusParams, len(mmStatus.callArgs))
-	copy(argCopy, mmStatus.callArgs)
-
-	mmStatus.mutex.RUnlock()
-
-	return argCopy
-}
-
-// MinimockStatusDone returns true if the count of the Status invocations corresponds
-// the number of defined expectations
-func (m *SolutionServiceMock) MinimockStatusDone() bool {
-	if m.StatusMock.optional {
-		// Optional methods provide '0 or more' call count restriction.
-		return true
-	}
-
-	for _, e := range m.StatusMock.expectations {
-		if mm_atomic.LoadUint64(&e.Counter) < 1 {
-			return false
-		}
-	}
-
-	return m.StatusMock.invocationsDone()
-}
-
-// MinimockStatusInspect logs each unmet expectation
-func (m *SolutionServiceMock) MinimockStatusInspect() {
-	for _, e := range m.StatusMock.expectations {
-		if mm_atomic.LoadUint64(&e.Counter) < 1 {
-			m.t.Errorf("Expected call to SolutionServiceMock.Status with params: %#v", *e.params)
-		}
-	}
-
-	afterStatusCounter := mm_atomic.LoadUint64(&m.afterStatusCounter)
-	// if default expectation was set then invocations count should be greater than zero
-	if m.StatusMock.defaultExpectation != nil && afterStatusCounter < 1 {
-		if m.StatusMock.defaultExpectation.params == nil {
-			m.t.Error("Expected call to SolutionServiceMock.Status")
-		} else {
-			m.t.Errorf("Expected call to SolutionServiceMock.Status with params: %#v", *m.StatusMock.defaultExpectation.params)
-		}
-	}
-	// if func was set then invocations count should be greater than zero
-	if m.funcStatus != nil && afterStatusCounter < 1 {
-		m.t.Error("Expected call to SolutionServiceMock.Status")
-	}
-
-	if !m.StatusMock.invocationsDone() && afterStatusCounter > 0 {
-		m.t.Errorf("Expected %d calls to SolutionServiceMock.Status but found %d calls",
-			mm_atomic.LoadUint64(&m.StatusMock.expectedInvocations), afterStatusCounter)
-	}
-}
-
 // MinimockFinish checks that all mocked methods have been called the expected number of times
 func (m *SolutionServiceMock) MinimockFinish() {
 	m.finishOnce.Do(func() {
 		if !m.minimockDone() {
 			m.MinimockDeployInspect()
 
-			m.MinimockListInspect()
+			m.MinimockDeployStatusInspect()
 
-			m.MinimockStatusInspect()
+			m.MinimockListInspect()
 			m.t.FailNow()
 		}
 	})
@@ -971,6 +1000,6 @@ func (m *SolutionServiceMock) minimockDone() bool {
 	done := true
 	return done &&
 		m.MinimockDeployDone() &&
-		m.MinimockListDone() &&
-		m.MinimockStatusDone()
+		m.MinimockDeployStatusDone() &&
+		m.MinimockListDone()
 }
