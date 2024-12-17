@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"net/http"
 
 	"github.com/s0vunia/platform_common/pkg/closer"
 	"github.com/s0vunia/platform_common/pkg/db"
