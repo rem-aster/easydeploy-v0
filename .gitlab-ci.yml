@@ -43,6 +43,8 @@ integration:
     - pip install -r tests/requirements.txt
   script:
     - pytest tests/tests.py
+  after_script:
+    - docker compose down
 
 # Deploy
 deploy_prod:
