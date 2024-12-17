@@ -6,7 +6,7 @@ from adapters.grpc.server import GRPCServer
 from adapters.redis.server import RedisServer
 from repo.repo import AnsibleRepo
 from proto import runner_pb2_grpc
-from services.playbook import Playbook
+from services.runner import RunnerServiceV1
 
 
 def signalHandler(sig, loop, server):
@@ -25,7 +25,7 @@ async def main():
 
     server_redis = RedisServer(os.environ.get("REDIS_ADDRESS"), int(os.environ.get("REDIS_PORT")), int(os.environ.get("REDIS_DB")), os.environ.get("REDIS_PASSWORD"))
     ansible_repo = AnsibleRepo(server_redis)
-    server_gRPC.add_service(runner_pb2_grpc.add_PlaybookServiceServicer_to_server, Playbook(ansible_repo))
+    server_gRPC.add_service(runner_pb2_grpc.add_PlaybookServiceV1Servicer_to_server, RunnerServiceV1(ansible_repo))
     
     # Handle graceful shutdown
     loop = asyncio.get_event_loop()

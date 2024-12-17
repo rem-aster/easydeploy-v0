@@ -5,19 +5,17 @@ RUN apt-get update && apt-get install -y sshpass && \
 
 WORKDIR /app
 
-COPY environment.yml .
+COPY runner/environment.yml .
 
 RUN conda env create -f environment.yml && conda clean -afy
 
 SHELL ["conda", "run", "-n", "runner-env", "/bin/bash", "-c"]
 
-COPY src/. .
+COPY runner/src/. .
 
-COPY protobuf protobuf
+COPY proto/runner.proto protobuf/runner.proto
 
-COPY playbooks playbooks
-
-RUN python -m grpc_tools.protoc -Iproto=protobuf --python_out=. --pyi_out=. --grpc_python_out=. protobuf/*.proto
+RUN python -m grpc_tools.protoc -Iproto=protobuf --python_out=. --pyi_out=. --grpc_python_out=. protobuf/runner.proto
 
 EXPOSE 50051
 

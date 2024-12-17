@@ -1,5 +1,5 @@
 import redis
-import json
+
 
 class RedisServer:
     def __init__(self, host='localhost', port=6379, db=0, password=None):
