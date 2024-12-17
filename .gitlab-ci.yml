@@ -31,8 +31,10 @@ unit:
   stage: test
   image: $GOLANG_IMAGE
   script:
-    - go test -v ./web_app
-    - go test -v ./backend
+    - cd web_app
+    - go test -v .
+    - cd ../backend
+    - go test -v .
 
 # Integration testing
 integration:
