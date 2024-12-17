@@ -8,11 +8,11 @@ import (
 const (
 	tableName = "solution"
 
-	idColumn        = "id"
-	nameColumn      = "name"
-	statusColumn    = "status"
-	createdAtColumn = "created_at"
-	updatedAtColumn = "updated_at"
+	idColumn          = "id"
+	nameColumn        = "name"
+	descriptionColumn = "description"
+	createdAtColumn   = "created_at"
+	updatedAtColumn   = "updated_at"
 )
 
 type repo struct {

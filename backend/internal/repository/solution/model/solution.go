@@ -15,13 +15,9 @@ type Solution struct {
 
 // SolutionInfo represents a user info entity with Status fields.
 type SolutionInfo struct {
-	Status DeployStatus `db:"status"`
+	Name        string `db:"name"`
+	Description string `db:"description"`
+	Playbook    string `db:"playbook"`
 }
 
 // DeployStatus represents a status of deployment
-type DeployStatus int32
-
-const (
-	// DeployUnknown represents an unknown deploy status
-	DeployUnknown DeployStatus = 0
-)

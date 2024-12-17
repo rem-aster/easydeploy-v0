@@ -13,9 +13,10 @@ func ToSolutionFromService(solution *model.Solution) *desc.Solution {
 		updatedAt = timestamppb.New(solution.UpdatedAt.Time)
 	}
 	return &desc.Solution{
+		Id: solution.ID,
 		Info: &desc.SolutionInfo{
-			Name:   solution.Info.Name,
-			Status: desc.SolutionStatus(solution.Info.Status),
+			Name:        solution.Info.Name,
+			Description: solution.Info.Description,
 		},
 		CreatedAt: timestamppb.New(solution.CreatedAt),
 		UpdatedAt: updatedAt,
