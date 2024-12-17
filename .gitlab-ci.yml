@@ -4,46 +4,66 @@ stages:
   - deploy
 
 variables:
-  PYTHON_IMAGE: python:3.11-slim
-  VENV_DIR: .venv
+  PYTHON_IMAGE: python:alpine
+  GOLANG_IMAGE: golang:alpine
 
-# Lint stage
-python:
+# Lint Python code
+lint_python:
   stage: lint
   image: $PYTHON_IMAGE
   before_script:
-    - python -m venv $VENV_DIR
-    - source $VENV_DIR/bin/activate
-    - pip install --upgrade pip
     - pip install ruff
   script:
-    - ruff check .
-  artifacts:
-    paths:
-      - ruff.log
-    when: always
-  allow_failure: false
+    - ruff check runner
+    - ruff check tests
 
-# Test stage
-integration:
+# Lint Golang code
+lint_golang:
+  stage: lint
+  image: $GOLANG_IMAGE
+  script:
+    - go install golang.org/x/lint/golint@latest
+    - golint ./web_app
+    - golint ./backend
+
+# Golang unit testing
+unit:
   stage: test
+  image: $GOLANG_IMAGE
+  script:
+    - cd web_app
+    - go test -v ./...
+    - cd ../backend
+    - go test -v ./...
+
+# Integration testing
+#integration:
+#  stage: test
+#  image: $PYTHON_IMAGE
+#  services:
+#    - docker:dind
+#  before_script:
+#    - apk add --no-cache docker-compose  # Install Docker Compose (and Docker if needed)
+#    - docker-compose -v  # Verify Docker Compose is installed
+#    - docker info  # Check if Docker is available
+#    - docker compose up -d -v --remove-orphans
+#    - pip install -r tests/requirements.txt
+#  script:
+#    - pytest tests/tests.py
+#    - docker compose down -v
+
+# Deploy
+deploy_prod:
+  stage: deploy
   image: $PYTHON_IMAGE
   before_script:
-    - python -m venv $VENV_DIR
-    - source $VENV_DIR/bin/activate
-    - pip install --upgrade pip
-    - pip install -r tests/requirements.txt
+    - pip install ansible
+    - ansible-galaxy collection install community.docker
   script:
-    - echo "TODO"
-#    - cd tests
-#    - pytest
-
-# Deploy stage
-deploy:
-  stage: deploy
-  image: alpine
-  script:
-    - echo "TODO"
+    - |
+        ansible-playbook -i "${PROD_IP}," \
+          --user "${PROD_USER}" \
+          --extra-vars "ansible_ssh_pass=${PROD_PASSWORD}" deploy-prod.yml
   only:
     - main
   when: manual
