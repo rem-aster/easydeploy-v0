@@ -43,11 +43,14 @@ integration:
   services:
     - docker:dind
   before_script:
-    - docker compose up -d --remove-orphans
+    - apk add --no-cache docker-compose  # Install Docker Compose (and Docker if needed)
+    - docker-compose -v  # Verify Docker Compose is installed
+    - docker info  # Check if Docker is available
+    - docker compose up -d -v --remove-orphans
     - pip install -r tests/requirements.txt
   script:
     - pytest tests/tests.py
-    - docker compose down
+    - docker compose down -v
 
 # Deploy
 deploy_prod:
