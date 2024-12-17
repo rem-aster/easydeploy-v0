@@ -1,5 +1,5 @@
 from services.service import AnsibleService
-from proto.runner_pb2_grpc import PlaybookService
+from proto.runner_pb2_grpc import PlaybookServiceV1
 from proto.runner_pb2 import RunPlaybookResponse, RunPlaybookRequest, PlaybookStatusRequest, PlaybookStatusResponse
 from models.models import AnsibleRequest, TaskStatus
 from google.protobuf.json_format import MessageToDict
@@ -8,7 +8,7 @@ from uuid import uuid4, UUID
 import asyncio
 
 
-class Playbook(AnsibleService, PlaybookService):
+class RunnerServiceV1(AnsibleService, PlaybookServiceV1):
     
     def __init__(self, repo: AnsibleRepo):
         super().__init__(repo)
@@ -23,7 +23,7 @@ class Playbook(AnsibleService, PlaybookService):
             username = ssh_addr[0]
             host, port = ssh_addr[1].split(":")
             passw = data.get('sshPassword')
-        except Exception as e:
+        except Exception:
             return RunPlaybookResponse(id="", status=TaskStatus.failed)
         extra = data.get('extraVars')
         req = AnsibleRequest(pb_name, host, port, username, passw, extra)
