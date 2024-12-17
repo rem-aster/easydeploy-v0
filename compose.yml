@@ -5,6 +5,7 @@ volumes:
   redis_volume:
   prometheus_data:
   grafana_data:
+  runner_playbooks:
 
 services:
   solution:
@@ -40,6 +41,27 @@ services:
       DB_HOST: pg
     depends_on:
       - pg
+
+  runner:
+    build:
+      dockerfile: ./runner/Dockerfile
+      context: ./
+    env_file:
+      - runner/.env
+    volumes:
+      - runner_playbooks:/app/playbooks
+    depends_on:
+      - solution
+      - redis
+
+  redis:
+    image: redis:alpine
+    restart: unless-stopped
+    command: /bin/sh -c "redis-server --requirepass $$REDIS_PASSWORD"
+    volumes: 
+      - redis_volume:/data
+    env_file:
+      - runner/.env
 
   prometheus:
     image: prom/prometheus:v2.37.9

@@ -1,0 +1,16 @@
+name: runner-env
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.12
+  - pip
+  - flake8
+  - pytest
+  - pip:
+    - grpcio
+    - grpcio-tools
+    - protobuf
+    - ansible
+    - ansible-runner
+    - redis
