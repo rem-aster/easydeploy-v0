@@ -7,8 +7,9 @@ CREATE TABLE "deploy"
     "solution_id" INTEGER,
     "name"        VARCHAR(255),
     "ssh_address" VARCHAR(255),
-    "ssh_key"     BYTEA,
+    "ssh_key"     VARCHAR(255),
     "extra"       JSONB,
+    id_playbook   VARCHAR(255),
     created_at    TIMESTAMP NOT NULL DEFAULT now(),
     updated_at    TIMESTAMP
 );

@@ -25,6 +25,7 @@ test:
 # backend
 generate:
 	make generate-solution-api
+	make generate-runner-api
 
 generate-solution-api:
 	mkdir -p backend/pkg/solution_v1
@@ -40,6 +41,15 @@ generate-solution-api:
 	--openapiv2_out=allow_merge=true,merge_file_name=api:backend/pkg/swagger \
 	--plugin=protoc-gen-openapiv2=backend/bin/protoc-gen-openapiv2 \
 	proto/backend.proto
+
+generate-runner-api:
+	mkdir -p backend/pkg/runner_v1
+	protoc --proto_path proto --proto_path backend/vendor.protogen \
+	--go_out=backend/pkg/runner_v1 --go_opt=paths=source_relative \
+	--plugin=protoc-gen-go=backend/bin/protoc-gen-go \
+	--go-grpc_out=backend/pkg/runner_v1 --go-grpc_opt=paths=source_relative \
+	--plugin=protoc-gen-go-grpc=backend/bin/protoc-gen-go-grpc \
+	proto/runner.proto
 
 install-deps:
 	GOBIN=$(LOCAL_BIN) go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.28.1

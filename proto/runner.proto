@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package runner;
 
+option go_package = "https://gitlab.crja72.ru/gospec/go16/easydeploy/backend/pkg/runner;runner_v1";
+
 service PlaybookServiceV1 {
     rpc RunPlaybook (RunPlaybookRequest) returns (RunPlaybookResponse);
     rpc GetTaskStatus (PlaybookStatusRequest) returns (PlaybookStatusResponse);
