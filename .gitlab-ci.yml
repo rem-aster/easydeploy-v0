@@ -32,9 +32,9 @@ unit:
   image: $GOLANG_IMAGE
   script:
     - cd web_app
-    - go test -v .
+    - go test -v ./...
     - cd ../backend
-    - go test -v .
+    - go test -v ./...
 
 # Integration testing
 #integration:
