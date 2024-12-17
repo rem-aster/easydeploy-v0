@@ -14,7 +14,8 @@ lint_python:
   before_script:
     - pip install ruff
   script:
-    - ruff check .
+    - ruff check runner
+    - ruff check tests
 
 # Lint Golang code
 lint_golang:
@@ -22,14 +23,16 @@ lint_golang:
   image: $GOLANG_IMAGE
   script:
     - go install golang.org/x/lint/golint@latest
-    - golint ./...
+    - golint ./web_app
+    - golint ./backend
 
 # Golang unit testing
 unit:
   stage: test
   image: $GOLANG_IMAGE
   script:
-    - go test -v ./...
+    - go test -v ./web_app
+    - go test -v ./backend
 
 # Integration testing
 integration:
