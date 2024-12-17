@@ -36,7 +36,7 @@ integration:
   stage: test
   image: $PYTHON_IMAGE
   before_script:
-    - make up
+    - docker compose up -d --remove-orphans
     - pip install -r tests/requirements.txt
   script:
     - pytest tests/tests.py
