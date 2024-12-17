@@ -25,11 +25,11 @@ type DeployRepositoryMock struct {
 	beforeDeployCounter uint64
 	DeployMock          mDeployRepositoryMockDeploy
 
-	funcDeployStatus          func(ctx context.Context) (err error)
-	inspectFuncDeployStatus   func(ctx context.Context)
-	afterDeployStatusCounter  uint64
-	beforeDeployStatusCounter uint64
-	DeployStatusMock          mDeployRepositoryMockDeployStatus
+	funcGet          func(ctx context.Context, id int64) (dp1 *model.Deploy, err error)
+	inspectFuncGet   func(ctx context.Context, id int64)
+	afterGetCounter  uint64
+	beforeGetCounter uint64
+	GetMock          mDeployRepositoryMockGet
 }
 
 // NewDeployRepositoryMock returns a mock for repository.DeployRepository
@@ -43,8 +43,8 @@ func NewDeployRepositoryMock(t minimock.Tester) *DeployRepositoryMock {
 	m.DeployMock = mDeployRepositoryMockDeploy{mock: m}
 	m.DeployMock.callArgs = []*DeployRepositoryMockDeployParams{}
 
-	m.DeployStatusMock = mDeployRepositoryMockDeployStatus{mock: m}
-	m.DeployStatusMock.callArgs = []*DeployRepositoryMockDeployStatusParams{}
+	m.GetMock = mDeployRepositoryMockGet{mock: m}
+	m.GetMock.callArgs = []*DeployRepositoryMockGetParams{}
 
 	t.Cleanup(m.MinimockFinish)
 
@@ -372,39 +372,42 @@ func (m *DeployRepositoryMock) MinimockDeployInspect() {
 	}
 }
 
-type mDeployRepositoryMockDeployStatus struct {
+type mDeployRepositoryMockGet struct {
 	optional           bool
 	mock               *DeployRepositoryMock
-	defaultExpectation *DeployRepositoryMockDeployStatusExpectation
-	expectations       []*DeployRepositoryMockDeployStatusExpectation
+	defaultExpectation *DeployRepositoryMockGetExpectation
+	expectations       []*DeployRepositoryMockGetExpectation
 
-	callArgs []*DeployRepositoryMockDeployStatusParams
+	callArgs []*DeployRepositoryMockGetParams
 	mutex    sync.RWMutex
 
 	expectedInvocations uint64
 }
 
-// DeployRepositoryMockDeployStatusExpectation specifies expectation struct of the DeployRepository.DeployStatus
-type DeployRepositoryMockDeployStatusExpectation struct {
+// DeployRepositoryMockGetExpectation specifies expectation struct of the DeployRepository.Get
+type DeployRepositoryMockGetExpectation struct {
 	mock      *DeployRepositoryMock
-	params    *DeployRepositoryMockDeployStatusParams
-	paramPtrs *DeployRepositoryMockDeployStatusParamPtrs
-	results   *DeployRepositoryMockDeployStatusResults
+	params    *DeployRepositoryMockGetParams
+	paramPtrs *DeployRepositoryMockGetParamPtrs
+	results   *DeployRepositoryMockGetResults
 	Counter   uint64
 }
 
-// DeployRepositoryMockDeployStatusParams contains parameters of the DeployRepository.DeployStatus
-type DeployRepositoryMockDeployStatusParams struct {
+// DeployRepositoryMockGetParams contains parameters of the DeployRepository.Get
+type DeployRepositoryMockGetParams struct {
 	ctx context.Context
+	id  int64
 }
 
-// DeployRepositoryMockDeployStatusParamPtrs contains pointers to parameters of the DeployRepository.DeployStatus
-type DeployRepositoryMockDeployStatusParamPtrs struct {
+// DeployRepositoryMockGetParamPtrs contains pointers to parameters of the DeployRepository.Get
+type DeployRepositoryMockGetParamPtrs struct {
 	ctx *context.Context
+	id  *int64
 }
 
-// DeployRepositoryMockDeployStatusResults contains results of the DeployRepository.DeployStatus
-type DeployRepositoryMockDeployStatusResults struct {
+// DeployRepositoryMockGetResults contains results of the DeployRepository.Get
+type DeployRepositoryMockGetResults struct {
+	dp1 *model.Deploy
 	err error
 }
 
@@ -413,254 +416,280 @@ type DeployRepositoryMockDeployStatusResults struct {
 // Optional() makes method check to work in '0 or more' mode.
 // It is NOT RECOMMENDED to use this option by default unless you really need it, as it helps to
 // catch the problems when the expected method call is totally skipped during test run.
-func (mmDeployStatus *mDeployRepositoryMockDeployStatus) Optional() *mDeployRepositoryMockDeployStatus {
-	mmDeployStatus.optional = true
-	return mmDeployStatus
+func (mmGet *mDeployRepositoryMockGet) Optional() *mDeployRepositoryMockGet {
+	mmGet.optional = true
+	return mmGet
 }
 
-// Expect sets up expected params for DeployRepository.DeployStatus
-func (mmDeployStatus *mDeployRepositoryMockDeployStatus) Expect(ctx context.Context) *mDeployRepositoryMockDeployStatus {
-	if mmDeployStatus.mock.funcDeployStatus != nil {
-		mmDeployStatus.mock.t.Fatalf("DeployRepositoryMock.DeployStatus mock is already set by Set")
+// Expect sets up expected params for DeployRepository.Get
+func (mmGet *mDeployRepositoryMockGet) Expect(ctx context.Context, id int64) *mDeployRepositoryMockGet {
+	if mmGet.mock.funcGet != nil {
+		mmGet.mock.t.Fatalf("DeployRepositoryMock.Get mock is already set by Set")
 	}
 
-	if mmDeployStatus.defaultExpectation == nil {
-		mmDeployStatus.defaultExpectation = &DeployRepositoryMockDeployStatusExpectation{}
+	if mmGet.defaultExpectation == nil {
+		mmGet.defaultExpectation = &DeployRepositoryMockGetExpectation{}
 	}
 
-	if mmDeployStatus.defaultExpectation.paramPtrs != nil {
-		mmDeployStatus.mock.t.Fatalf("DeployRepositoryMock.DeployStatus mock is already set by ExpectParams functions")
+	if mmGet.defaultExpectation.paramPtrs != nil {
+		mmGet.mock.t.Fatalf("DeployRepositoryMock.Get mock is already set by ExpectParams functions")
 	}
 
-	mmDeployStatus.defaultExpectation.params = &DeployRepositoryMockDeployStatusParams{ctx}
-	for _, e := range mmDeployStatus.expectations {
-		if minimock.Equal(e.params, mmDeployStatus.defaultExpectation.params) {
-			mmDeployStatus.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmDeployStatus.defaultExpectation.params)
+	mmGet.defaultExpectation.params = &DeployRepositoryMockGetParams{ctx, id}
+	for _, e := range mmGet.expectations {
+		if minimock.Equal(e.params, mmGet.defaultExpectation.params) {
+			mmGet.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmGet.defaultExpectation.params)
 		}
 	}
 
-	return mmDeployStatus
+	return mmGet
 }
 
-// ExpectCtxParam1 sets up expected param ctx for DeployRepository.DeployStatus
-func (mmDeployStatus *mDeployRepositoryMockDeployStatus) ExpectCtxParam1(ctx context.Context) *mDeployRepositoryMockDeployStatus {
-	if mmDeployStatus.mock.funcDeployStatus != nil {
-		mmDeployStatus.mock.t.Fatalf("DeployRepositoryMock.DeployStatus mock is already set by Set")
+// ExpectCtxParam1 sets up expected param ctx for DeployRepository.Get
+func (mmGet *mDeployRepositoryMockGet) ExpectCtxParam1(ctx context.Context) *mDeployRepositoryMockGet {
+	if mmGet.mock.funcGet != nil {
+		mmGet.mock.t.Fatalf("DeployRepositoryMock.Get mock is already set by Set")
 	}
 
-	if mmDeployStatus.defaultExpectation == nil {
-		mmDeployStatus.defaultExpectation = &DeployRepositoryMockDeployStatusExpectation{}
+	if mmGet.defaultExpectation == nil {
+		mmGet.defaultExpectation = &DeployRepositoryMockGetExpectation{}
 	}
 
-	if mmDeployStatus.defaultExpectation.params != nil {
-		mmDeployStatus.mock.t.Fatalf("DeployRepositoryMock.DeployStatus mock is already set by Expect")
+	if mmGet.defaultExpectation.params != nil {
+		mmGet.mock.t.Fatalf("DeployRepositoryMock.Get mock is already set by Expect")
 	}
 
-	if mmDeployStatus.defaultExpectation.paramPtrs == nil {
-		mmDeployStatus.defaultExpectation.paramPtrs = &DeployRepositoryMockDeployStatusParamPtrs{}
+	if mmGet.defaultExpectation.paramPtrs == nil {
+		mmGet.defaultExpectation.paramPtrs = &DeployRepositoryMockGetParamPtrs{}
 	}
-	mmDeployStatus.defaultExpectation.paramPtrs.ctx = &ctx
+	mmGet.defaultExpectation.paramPtrs.ctx = &ctx
 
-	return mmDeployStatus
+	return mmGet
 }
 
-// Inspect accepts an inspector function that has same arguments as the DeployRepository.DeployStatus
-func (mmDeployStatus *mDeployRepositoryMockDeployStatus) Inspect(f func(ctx context.Context)) *mDeployRepositoryMockDeployStatus {
-	if mmDeployStatus.mock.inspectFuncDeployStatus != nil {
-		mmDeployStatus.mock.t.Fatalf("Inspect function is already set for DeployRepositoryMock.DeployStatus")
+// ExpectIdParam2 sets up expected param id for DeployRepository.Get
+func (mmGet *mDeployRepositoryMockGet) ExpectIdParam2(id int64) *mDeployRepositoryMockGet {
+	if mmGet.mock.funcGet != nil {
+		mmGet.mock.t.Fatalf("DeployRepositoryMock.Get mock is already set by Set")
 	}
 
-	mmDeployStatus.mock.inspectFuncDeployStatus = f
+	if mmGet.defaultExpectation == nil {
+		mmGet.defaultExpectation = &DeployRepositoryMockGetExpectation{}
+	}
 
-	return mmDeployStatus
+	if mmGet.defaultExpectation.params != nil {
+		mmGet.mock.t.Fatalf("DeployRepositoryMock.Get mock is already set by Expect")
+	}
+
+	if mmGet.defaultExpectation.paramPtrs == nil {
+		mmGet.defaultExpectation.paramPtrs = &DeployRepositoryMockGetParamPtrs{}
+	}
+	mmGet.defaultExpectation.paramPtrs.id = &id
+
+	return mmGet
 }
 
-// Return sets up results that will be returned by DeployRepository.DeployStatus
-func (mmDeployStatus *mDeployRepositoryMockDeployStatus) Return(err error) *DeployRepositoryMock {
-	if mmDeployStatus.mock.funcDeployStatus != nil {
-		mmDeployStatus.mock.t.Fatalf("DeployRepositoryMock.DeployStatus mock is already set by Set")
+// Inspect accepts an inspector function that has same arguments as the DeployRepository.Get
+func (mmGet *mDeployRepositoryMockGet) Inspect(f func(ctx context.Context, id int64)) *mDeployRepositoryMockGet {
+	if mmGet.mock.inspectFuncGet != nil {
+		mmGet.mock.t.Fatalf("Inspect function is already set for DeployRepositoryMock.Get")
 	}
 
-	if mmDeployStatus.defaultExpectation == nil {
-		mmDeployStatus.defaultExpectation = &DeployRepositoryMockDeployStatusExpectation{mock: mmDeployStatus.mock}
-	}
-	mmDeployStatus.defaultExpectation.results = &DeployRepositoryMockDeployStatusResults{err}
-	return mmDeployStatus.mock
+	mmGet.mock.inspectFuncGet = f
+
+	return mmGet
 }
 
-// Set uses given function f to mock the DeployRepository.DeployStatus method
-func (mmDeployStatus *mDeployRepositoryMockDeployStatus) Set(f func(ctx context.Context) (err error)) *DeployRepositoryMock {
-	if mmDeployStatus.defaultExpectation != nil {
-		mmDeployStatus.mock.t.Fatalf("Default expectation is already set for the DeployRepository.DeployStatus method")
+// Return sets up results that will be returned by DeployRepository.Get
+func (mmGet *mDeployRepositoryMockGet) Return(dp1 *model.Deploy, err error) *DeployRepositoryMock {
+	if mmGet.mock.funcGet != nil {
+		mmGet.mock.t.Fatalf("DeployRepositoryMock.Get mock is already set by Set")
 	}
 
-	if len(mmDeployStatus.expectations) > 0 {
-		mmDeployStatus.mock.t.Fatalf("Some expectations are already set for the DeployRepository.DeployStatus method")
+	if mmGet.defaultExpectation == nil {
+		mmGet.defaultExpectation = &DeployRepositoryMockGetExpectation{mock: mmGet.mock}
 	}
-
-	mmDeployStatus.mock.funcDeployStatus = f
-	return mmDeployStatus.mock
+	mmGet.defaultExpectation.results = &DeployRepositoryMockGetResults{dp1, err}
+	return mmGet.mock
 }
 
-// When sets expectation for the DeployRepository.DeployStatus which will trigger the result defined by the following
+// Set uses given function f to mock the DeployRepository.Get method
+func (mmGet *mDeployRepositoryMockGet) Set(f func(ctx context.Context, id int64) (dp1 *model.Deploy, err error)) *DeployRepositoryMock {
+	if mmGet.defaultExpectation != nil {
+		mmGet.mock.t.Fatalf("Default expectation is already set for the DeployRepository.Get method")
+	}
+
+	if len(mmGet.expectations) > 0 {
+		mmGet.mock.t.Fatalf("Some expectations are already set for the DeployRepository.Get method")
+	}
+
+	mmGet.mock.funcGet = f
+	return mmGet.mock
+}
+
+// When sets expectation for the DeployRepository.Get which will trigger the result defined by the following
 // Then helper
-func (mmDeployStatus *mDeployRepositoryMockDeployStatus) When(ctx context.Context) *DeployRepositoryMockDeployStatusExpectation {
-	if mmDeployStatus.mock.funcDeployStatus != nil {
-		mmDeployStatus.mock.t.Fatalf("DeployRepositoryMock.DeployStatus mock is already set by Set")
+func (mmGet *mDeployRepositoryMockGet) When(ctx context.Context, id int64) *DeployRepositoryMockGetExpectation {
+	if mmGet.mock.funcGet != nil {
+		mmGet.mock.t.Fatalf("DeployRepositoryMock.Get mock is already set by Set")
 	}
 
-	expectation := &DeployRepositoryMockDeployStatusExpectation{
-		mock:   mmDeployStatus.mock,
-		params: &DeployRepositoryMockDeployStatusParams{ctx},
+	expectation := &DeployRepositoryMockGetExpectation{
+		mock:   mmGet.mock,
+		params: &DeployRepositoryMockGetParams{ctx, id},
 	}
-	mmDeployStatus.expectations = append(mmDeployStatus.expectations, expectation)
+	mmGet.expectations = append(mmGet.expectations, expectation)
 	return expectation
 }
 
-// Then sets up DeployRepository.DeployStatus return parameters for the expectation previously defined by the When method
-func (e *DeployRepositoryMockDeployStatusExpectation) Then(err error) *DeployRepositoryMock {
-	e.results = &DeployRepositoryMockDeployStatusResults{err}
+// Then sets up DeployRepository.Get return parameters for the expectation previously defined by the When method
+func (e *DeployRepositoryMockGetExpectation) Then(dp1 *model.Deploy, err error) *DeployRepositoryMock {
+	e.results = &DeployRepositoryMockGetResults{dp1, err}
 	return e.mock
 }
 
-// Times sets number of times DeployRepository.DeployStatus should be invoked
-func (mmDeployStatus *mDeployRepositoryMockDeployStatus) Times(n uint64) *mDeployRepositoryMockDeployStatus {
+// Times sets number of times DeployRepository.Get should be invoked
+func (mmGet *mDeployRepositoryMockGet) Times(n uint64) *mDeployRepositoryMockGet {
 	if n == 0 {
-		mmDeployStatus.mock.t.Fatalf("Times of DeployRepositoryMock.DeployStatus mock can not be zero")
+		mmGet.mock.t.Fatalf("Times of DeployRepositoryMock.Get mock can not be zero")
 	}
-	mm_atomic.StoreUint64(&mmDeployStatus.expectedInvocations, n)
-	return mmDeployStatus
+	mm_atomic.StoreUint64(&mmGet.expectedInvocations, n)
+	return mmGet
 }
 
-func (mmDeployStatus *mDeployRepositoryMockDeployStatus) invocationsDone() bool {
-	if len(mmDeployStatus.expectations) == 0 && mmDeployStatus.defaultExpectation == nil && mmDeployStatus.mock.funcDeployStatus == nil {
+func (mmGet *mDeployRepositoryMockGet) invocationsDone() bool {
+	if len(mmGet.expectations) == 0 && mmGet.defaultExpectation == nil && mmGet.mock.funcGet == nil {
 		return true
 	}
 
-	totalInvocations := mm_atomic.LoadUint64(&mmDeployStatus.mock.afterDeployStatusCounter)
-	expectedInvocations := mm_atomic.LoadUint64(&mmDeployStatus.expectedInvocations)
+	totalInvocations := mm_atomic.LoadUint64(&mmGet.mock.afterGetCounter)
+	expectedInvocations := mm_atomic.LoadUint64(&mmGet.expectedInvocations)
 
 	return totalInvocations > 0 && (expectedInvocations == 0 || expectedInvocations == totalInvocations)
 }
 
-// DeployStatus implements repository.DeployRepository
-func (mmDeployStatus *DeployRepositoryMock) DeployStatus(ctx context.Context) (err error) {
-	mm_atomic.AddUint64(&mmDeployStatus.beforeDeployStatusCounter, 1)
-	defer mm_atomic.AddUint64(&mmDeployStatus.afterDeployStatusCounter, 1)
+// Get implements repository.DeployRepository
+func (mmGet *DeployRepositoryMock) Get(ctx context.Context, id int64) (dp1 *model.Deploy, err error) {
+	mm_atomic.AddUint64(&mmGet.beforeGetCounter, 1)
+	defer mm_atomic.AddUint64(&mmGet.afterGetCounter, 1)
 
-	if mmDeployStatus.inspectFuncDeployStatus != nil {
-		mmDeployStatus.inspectFuncDeployStatus(ctx)
+	if mmGet.inspectFuncGet != nil {
+		mmGet.inspectFuncGet(ctx, id)
 	}
 
-	mm_params := DeployRepositoryMockDeployStatusParams{ctx}
+	mm_params := DeployRepositoryMockGetParams{ctx, id}
 
 	// Record call args
-	mmDeployStatus.DeployStatusMock.mutex.Lock()
-	mmDeployStatus.DeployStatusMock.callArgs = append(mmDeployStatus.DeployStatusMock.callArgs, &mm_params)
-	mmDeployStatus.DeployStatusMock.mutex.Unlock()
+	mmGet.GetMock.mutex.Lock()
+	mmGet.GetMock.callArgs = append(mmGet.GetMock.callArgs, &mm_params)
+	mmGet.GetMock.mutex.Unlock()
 
-	for _, e := range mmDeployStatus.DeployStatusMock.expectations {
+	for _, e := range mmGet.GetMock.expectations {
 		if minimock.Equal(*e.params, mm_params) {
 			mm_atomic.AddUint64(&e.Counter, 1)
-			return e.results.err
+			return e.results.dp1, e.results.err
 		}
 	}
 
-	if mmDeployStatus.DeployStatusMock.defaultExpectation != nil {
-		mm_atomic.AddUint64(&mmDeployStatus.DeployStatusMock.defaultExpectation.Counter, 1)
-		mm_want := mmDeployStatus.DeployStatusMock.defaultExpectation.params
-		mm_want_ptrs := mmDeployStatus.DeployStatusMock.defaultExpectation.paramPtrs
+	if mmGet.GetMock.defaultExpectation != nil {
+		mm_atomic.AddUint64(&mmGet.GetMock.defaultExpectation.Counter, 1)
+		mm_want := mmGet.GetMock.defaultExpectation.params
+		mm_want_ptrs := mmGet.GetMock.defaultExpectation.paramPtrs
 
-		mm_got := DeployRepositoryMockDeployStatusParams{ctx}
+		mm_got := DeployRepositoryMockGetParams{ctx, id}
 
 		if mm_want_ptrs != nil {
 
 			if mm_want_ptrs.ctx != nil && !minimock.Equal(*mm_want_ptrs.ctx, mm_got.ctx) {
-				mmDeployStatus.t.Errorf("DeployRepositoryMock.DeployStatus got unexpected parameter ctx, want: %#v, got: %#v%s\n", *mm_want_ptrs.ctx, mm_got.ctx, minimock.Diff(*mm_want_ptrs.ctx, mm_got.ctx))
+				mmGet.t.Errorf("DeployRepositoryMock.Get got unexpected parameter ctx, want: %#v, got: %#v%s\n", *mm_want_ptrs.ctx, mm_got.ctx, minimock.Diff(*mm_want_ptrs.ctx, mm_got.ctx))
+			}
+
+			if mm_want_ptrs.id != nil && !minimock.Equal(*mm_want_ptrs.id, mm_got.id) {
+				mmGet.t.Errorf("DeployRepositoryMock.Get got unexpected parameter id, want: %#v, got: %#v%s\n", *mm_want_ptrs.id, mm_got.id, minimock.Diff(*mm_want_ptrs.id, mm_got.id))
 			}
 
 		} else if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
-			mmDeployStatus.t.Errorf("DeployRepositoryMock.DeployStatus got unexpected parameters, want: %#v, got: %#v%s\n", *mm_want, mm_got, minimock.Diff(*mm_want, mm_got))
+			mmGet.t.Errorf("DeployRepositoryMock.Get got unexpected parameters, want: %#v, got: %#v%s\n", *mm_want, mm_got, minimock.Diff(*mm_want, mm_got))
 		}
 
-		mm_results := mmDeployStatus.DeployStatusMock.defaultExpectation.results
+		mm_results := mmGet.GetMock.defaultExpectation.results
 		if mm_results == nil {
-			mmDeployStatus.t.Fatal("No results are set for the DeployRepositoryMock.DeployStatus")
+			mmGet.t.Fatal("No results are set for the DeployRepositoryMock.Get")
 		}
-		return (*mm_results).err
+		return (*mm_results).dp1, (*mm_results).err
 	}
-	if mmDeployStatus.funcDeployStatus != nil {
-		return mmDeployStatus.funcDeployStatus(ctx)
+	if mmGet.funcGet != nil {
+		return mmGet.funcGet(ctx, id)
 	}
-	mmDeployStatus.t.Fatalf("Unexpected call to DeployRepositoryMock.DeployStatus. %v", ctx)
+	mmGet.t.Fatalf("Unexpected call to DeployRepositoryMock.Get. %v %v", ctx, id)
 	return
 }
 
-// DeployStatusAfterCounter returns a count of finished DeployRepositoryMock.DeployStatus invocations
-func (mmDeployStatus *DeployRepositoryMock) DeployStatusAfterCounter() uint64 {
-	return mm_atomic.LoadUint64(&mmDeployStatus.afterDeployStatusCounter)
+// GetAfterCounter returns a count of finished DeployRepositoryMock.Get invocations
+func (mmGet *DeployRepositoryMock) GetAfterCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmGet.afterGetCounter)
 }
 
-// DeployStatusBeforeCounter returns a count of DeployRepositoryMock.DeployStatus invocations
-func (mmDeployStatus *DeployRepositoryMock) DeployStatusBeforeCounter() uint64 {
-	return mm_atomic.LoadUint64(&mmDeployStatus.beforeDeployStatusCounter)
+// GetBeforeCounter returns a count of DeployRepositoryMock.Get invocations
+func (mmGet *DeployRepositoryMock) GetBeforeCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmGet.beforeGetCounter)
 }
 
-// Calls returns a list of arguments used in each call to DeployRepositoryMock.DeployStatus.
+// Calls returns a list of arguments used in each call to DeployRepositoryMock.Get.
 // The list is in the same order as the calls were made (i.e. recent calls have a higher index)
-func (mmDeployStatus *mDeployRepositoryMockDeployStatus) Calls() []*DeployRepositoryMockDeployStatusParams {
-	mmDeployStatus.mutex.RLock()
+func (mmGet *mDeployRepositoryMockGet) Calls() []*DeployRepositoryMockGetParams {
+	mmGet.mutex.RLock()
 
-	argCopy := make([]*DeployRepositoryMockDeployStatusParams, len(mmDeployStatus.callArgs))
-	copy(argCopy, mmDeployStatus.callArgs)
+	argCopy := make([]*DeployRepositoryMockGetParams, len(mmGet.callArgs))
+	copy(argCopy, mmGet.callArgs)
 
-	mmDeployStatus.mutex.RUnlock()
+	mmGet.mutex.RUnlock()
 
 	return argCopy
 }
 
-// MinimockDeployStatusDone returns true if the count of the DeployStatus invocations corresponds
+// MinimockGetDone returns true if the count of the Get invocations corresponds
 // the number of defined expectations
-func (m *DeployRepositoryMock) MinimockDeployStatusDone() bool {
-	if m.DeployStatusMock.optional {
+func (m *DeployRepositoryMock) MinimockGetDone() bool {
+	if m.GetMock.optional {
 		// Optional methods provide '0 or more' call count restriction.
 		return true
 	}
 
-	for _, e := range m.DeployStatusMock.expectations {
+	for _, e := range m.GetMock.expectations {
 		if mm_atomic.LoadUint64(&e.Counter) < 1 {
 			return false
 		}
 	}
 
-	return m.DeployStatusMock.invocationsDone()
+	return m.GetMock.invocationsDone()
 }
 
-// MinimockDeployStatusInspect logs each unmet expectation
-func (m *DeployRepositoryMock) MinimockDeployStatusInspect() {
-	for _, e := range m.DeployStatusMock.expectations {
+// MinimockGetInspect logs each unmet expectation
+func (m *DeployRepositoryMock) MinimockGetInspect() {
+	for _, e := range m.GetMock.expectations {
 		if mm_atomic.LoadUint64(&e.Counter) < 1 {
-			m.t.Errorf("Expected call to DeployRepositoryMock.DeployStatus with params: %#v", *e.params)
+			m.t.Errorf("Expected call to DeployRepositoryMock.Get with params: %#v", *e.params)
 		}
 	}
 
-	afterDeployStatusCounter := mm_atomic.LoadUint64(&m.afterDeployStatusCounter)
+	afterGetCounter := mm_atomic.LoadUint64(&m.afterGetCounter)
 	// if default expectation was set then invocations count should be greater than zero
-	if m.DeployStatusMock.defaultExpectation != nil && afterDeployStatusCounter < 1 {
-		if m.DeployStatusMock.defaultExpectation.params == nil {
-			m.t.Error("Expected call to DeployRepositoryMock.DeployStatus")
+	if m.GetMock.defaultExpectation != nil && afterGetCounter < 1 {
+		if m.GetMock.defaultExpectation.params == nil {
+			m.t.Error("Expected call to DeployRepositoryMock.Get")
 		} else {
-			m.t.Errorf("Expected call to DeployRepositoryMock.DeployStatus with params: %#v", *m.DeployStatusMock.defaultExpectation.params)
+			m.t.Errorf("Expected call to DeployRepositoryMock.Get with params: %#v", *m.GetMock.defaultExpectation.params)
 		}
 	}
 	// if func was set then invocations count should be greater than zero
-	if m.funcDeployStatus != nil && afterDeployStatusCounter < 1 {
-		m.t.Error("Expected call to DeployRepositoryMock.DeployStatus")
+	if m.funcGet != nil && afterGetCounter < 1 {
+		m.t.Error("Expected call to DeployRepositoryMock.Get")
 	}
 
-	if !m.DeployStatusMock.invocationsDone() && afterDeployStatusCounter > 0 {
-		m.t.Errorf("Expected %d calls to DeployRepositoryMock.DeployStatus but found %d calls",
-			mm_atomic.LoadUint64(&m.DeployStatusMock.expectedInvocations), afterDeployStatusCounter)
+	if !m.GetMock.invocationsDone() && afterGetCounter > 0 {
+		m.t.Errorf("Expected %d calls to DeployRepositoryMock.Get but found %d calls",
+			mm_atomic.LoadUint64(&m.GetMock.expectedInvocations), afterGetCounter)
 	}
 }
 
@@ -670,7 +699,7 @@ func (m *DeployRepositoryMock) MinimockFinish() {
 		if !m.minimockDone() {
 			m.MinimockDeployInspect()
 
-			m.MinimockDeployStatusInspect()
+			m.MinimockGetInspect()
 			m.t.FailNow()
 		}
 	})
@@ -696,5 +725,5 @@ func (m *DeployRepositoryMock) minimockDone() bool {
 	done := true
 	return done &&
 		m.MinimockDeployDone() &&
-		m.MinimockDeployStatusDone()
+		m.MinimockGetDone()
 }

@@ -10,6 +10,7 @@ const (
 
 	idColumn          = "id"
 	nameColumn        = "name"
+	playbookColumn    = "playbook"
 	descriptionColumn = "description"
 	createdAtColumn   = "created_at"
 	updatedAtColumn   = "updated_at"

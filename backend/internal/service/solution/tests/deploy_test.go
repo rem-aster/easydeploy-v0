@@ -35,7 +35,7 @@ func TestSolution_Deploy(t *testing.T) {
 			DeployInfo: model.DeployInfo{
 				SolutionId: 1,
 				SSHAddress: "root@127.0.0.1",
-				SSHKey:     []byte("ssh key"),
+				SSHKey:     "ssh key",
 				Extra:      map[string]string{"key": "value", "key2": "value2"},
 			},
 		}

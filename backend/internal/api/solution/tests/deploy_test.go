@@ -35,7 +35,7 @@ func TestImplementation_Deploy(t *testing.T) {
 		req = &desc.DeployRequest{
 			SolutionId: 1,
 			SshAddress: "root@127.0.0.1",
-			SshKey:     []byte("ssh key"),
+			SshKey:     "ssh key",
 			ExtraVars:  map[string]string{"key": "value"},
 		}
 
@@ -43,7 +43,7 @@ func TestImplementation_Deploy(t *testing.T) {
 			DeployInfo: model.DeployInfo{
 				SolutionId: 1,
 				SSHAddress: "root@127.0.0.1",
-				SSHKey:     []byte("ssh key"),
+				SSHKey:     "ssh key",
 				Extra:      map[string]string{"key": "value"},
 			},
 		}
