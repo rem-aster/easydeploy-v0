@@ -55,3 +55,4 @@ deploy_prod:
           --extra-vars "ansible_ssh_pass=${PROD_PASSWORD}" deploy-prod.yml
   only:
     - main
+  when: manual
