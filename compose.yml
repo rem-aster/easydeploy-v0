@@ -7,6 +7,19 @@ volumes:
   grafana_data:
 
 services:
+  webapp:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    environment:
+      - BACKEND_HOST=solution
+      - RUNNER_PORT=8080
+    depends_on:
+      - solution
+    restart: on-failure
+
   solution:
     environment:
       - CONFIG_PATH=.env
