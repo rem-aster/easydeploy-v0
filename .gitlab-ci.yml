@@ -31,6 +31,8 @@ unit:
   stage: test
   image: $GOLANG_IMAGE
   script:
+    - go install github.com/a-h/templ/cmd/templ@latest
+    - make generate-templ
     - cd web_app
     - go test -v ./...
     - cd ../backend
