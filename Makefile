@@ -43,13 +43,19 @@ generate-solution-api:
 	proto/backend.proto
 
 generate-webapp:
-	make generate-templ
 	mkdir -p web_app/pkg/solution_v1
-	protoc --proto_path proto \
-	--go_out=web_app/pkg/solution_v1 --go_opt=paths=source_relative \
-	--go-grpc_out=web_app/pkg/solution_v1 --go-grpc_opt=paths=source_relative \
-	--validate_out lang=go:backend/pkg/solution_v1 --validate_opt=paths=source_relative \
-	proto/backend.proto
+	protoc \
+        --proto_path proto --proto_path backend/vendor.protogen \
+        --go_out=web_app/pkg/solution_v1 --go_opt=paths=source_relative \
+		--plugin=protoc-gen-go=backend/bin/protoc-gen-go \
+		--go-grpc_out=web_app/pkg/solution_v1 --go-grpc_opt=paths=source_relative \
+		--plugin=protoc-gen-go-grpc=backend/bin/protoc-gen-go-grpc \
+		--grpc-gateway_out=web_app/pkg/solution_v1 --grpc-gateway_opt=paths=source_relative \
+		--plugin=protoc-gen-grpc-gateway=backend/bin/protoc-gen-grpc-gateway \
+		--validate_out lang=go:web_app/pkg/solution_v1 --validate_opt=paths=source_relative \
+		--plugin=protoc-gen-validate=backend/bin/protoc-gen-validate \
+		proto/backend.proto
+
 
 
 
@@ -60,6 +66,7 @@ generate-runner-api:
 	--plugin=protoc-gen-go=backend/bin/protoc-gen-go \
 	--go-grpc_out=backend/pkg/runner_v1 --go-grpc_opt=paths=source_relative \
 	--plugin=protoc-gen-go-grpc=backend/bin/protoc-gen-go-grpc \
+	--experimental_allow_unused_imports \
 	proto/runner.proto
 
 generate-templ:
