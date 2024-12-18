@@ -32,7 +32,7 @@ unit:
   image: $GOLANG_IMAGE
   script:
     - go install github.com/a-h/templ/cmd/templ@latest
-    - make generate-templ
+    - templ generate -path web_app
     - cd web_app
     - go test -v ./...
     - cd ../backend
