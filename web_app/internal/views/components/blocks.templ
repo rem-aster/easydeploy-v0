@@ -1,0 +1,43 @@
+package components
+
+import "gitlab.crja72.ru/gospec/go16/easydeploy/web_app/internal/model"
+
+templ SolutionCard(s model.Solution) {
+	<div class="card bg-base-100 w-96 shadow-xl hover:grow">
+		<div class="card-body">
+			<h2 class="card-title">{ s.Label }</h2>
+			<p>{ s.Description }</p>
+			<div class="card-actions justify-end">
+				<a class="btn btn-primary" href={ templ.URL("solution/" + s.ID) }>Deploy Now</a>
+			</div>
+		</div>
+	</div>
+}
+
+templ AllSolutions(ss []model.Solution) {
+	<div class="flex flex-col gap-5 justify-center">
+		for _, s := range ss {
+			@SolutionCard(s)
+		}
+	</div>
+}
+
+templ Steps() {
+	<div id="steps" class="hero p-16">
+		<ul class="steps">
+			{ children... }
+		</ul>
+	</div>
+}
+
+templ Step(label string, active bool) {
+	if active {
+		<li class={ "step step-primary underline decoration-primary" }>
+			{ label }
+		</li>
+	} else {
+		<li class={ "step underline decoration-primary" }>
+			{ label }
+		</li>
+	}
+}
