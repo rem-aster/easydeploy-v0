@@ -11,6 +11,9 @@ import (
 
 func (s serv) Deploy(ctx context.Context, deploy *model.Deploy) (int64, error) {
 	solution, err := s.solutionRepository.Get(ctx, deploy.DeployInfo.SolutionId)
+	if err != nil {
+		return 0, err
+	}
 	logger.Info(
 		"Deploy solution",
 		zap.Int64("solution_id", deploy.DeployInfo.SolutionId),
