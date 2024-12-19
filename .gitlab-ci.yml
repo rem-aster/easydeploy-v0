@@ -60,7 +60,7 @@ deploy_prod:
   image: $PYTHON_IMAGE
   before_script:
     - pip install ansible
-    - apt-get install sshpass
+    - apk add sshpass
     - ansible-galaxy collection install community.docker
   script:
     - |
