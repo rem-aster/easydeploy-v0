@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"time"
 
 	"github.com/s0vunia/platform_common/pkg/closer"
 	"github.com/s0vunia/platform_common/pkg/db"
@@ -150,7 +151,8 @@ func (s *serviceProvider) DBClient(ctx context.Context) db.Client {
 				cl, err = pg.New(ctx, s.PGConfig().DSN())
 				return err
 			},
-			retry.Attempts(3),
+			retry.Attempts(10),
+			retry.Delay(500*time.Millisecond),
 			retry.OnRetry(func(n uint, err error) {
 				logger.Info("Retrying request after error: %v",
 					zap.Error(err))
