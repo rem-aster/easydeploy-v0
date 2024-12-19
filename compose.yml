@@ -19,6 +19,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.webapp.rule=Host(`easydeploy.ru`)"
       - "traefik.http.routers.webapp.entrypoints=web"
+      - "traefik.http.services.webapp.loadbalancer.server.port=8082"
 
   solution:
     environment:
