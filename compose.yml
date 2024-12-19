@@ -7,6 +7,16 @@ volumes:
   grafana_data:
 
 services:
+  webapp:
+    build:
+      context: ./web_app
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - solution
+    restart: on-failure
+
   solution:
     environment:
       - CONFIG_PATH=.env
@@ -70,7 +80,7 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - ./backend/prometheus.yaml:/etc/prometheus/prometheus.yml
+      - ./prometheus.yaml:/etc/prometheus/prometheus.yml
 
   grafana:
     image: grafana/grafana-oss:10.0.3
