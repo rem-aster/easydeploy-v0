@@ -162,7 +162,7 @@ func main() {
 	webapp.Any("/*", echo.NotFoundHandler) // Catch-all for undefined routes
 
 	// Start the server
-	e.Logger.Fatal(e.Start(":8080"))
+	e.Logger.Fatal(e.Start(":80"))
 }
 
 // GetSolutions returns a list of available solutions via gRPC.
