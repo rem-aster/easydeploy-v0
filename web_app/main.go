@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/google/uuid"
 	"net/http"
 	"context"
 	"time"
@@ -243,7 +242,7 @@ func GetDeployStatus(id string) (model.DeployStatus, error) {
 	if err != nil {
 		return model.DeployStatus{
 			ID:    id,
-			State: model.StateConnectionError,
+			State: model.StateUnknown,
 		}, err
 	}
 
