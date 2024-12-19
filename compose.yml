@@ -13,6 +13,8 @@ services:
     depends_on:
       - solution
     restart: on-failure
+    networks:
+      - traefik_network
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.webapp.rule=Host(`easydeploy.ru`)"
@@ -102,7 +104,7 @@ services:
       - "9411:9411"
 
   traefik:
-    image: traefik:v2.10
+    image: traefik:v3.2
     command:
       - "--api.insecure=true"
       - "--providers.docker=true"
@@ -113,8 +115,15 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - traefik_certificates:/certificates
+    networks:
+      - traefik_network
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.dashboard.rule=Host(`traefik.easydeploy.ru`)"
-      - "traefik.http.routers.dashboard.service=api@internal"
-      - "traefik.http.routers.dashboard.entrypoints=web"
+      - "--log.level=DEBUG"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entryPoints.web.address=:80"
+
+networks:
+  traefik_network:
+    driver: bridge
