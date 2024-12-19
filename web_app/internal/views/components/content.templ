@@ -1,6 +1,7 @@
 package components
 
 import "gitlab.crja72.ru/gospec/go16/easydeploy/web_app/internal/model"
+import "strings"
 
 templ Index() {
 	<div class="hero bg-base-100 min-h-screen">
@@ -114,7 +115,12 @@ templ Solution(s model.Solution) {
 templ Deploy(s model.DeployStatus) {
 	<div class="hero">
 		<div class="hero-content">
-		<p>{ s.State.String() } { s.ID }</p>
+			<div class="card w-96 shadow-xl">
+				<div class="card-body">
+					<h2 class="card-title">Deployment status: <a class="underline decoration-primary decoration-4">{ strings.ToUpper(s.State.String()) }</a></h2>
+					<p>Your solution will be ready soon</p>
+				</div>
+			</div>
 		</div>
 	</div>
 }
