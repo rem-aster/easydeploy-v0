@@ -1,21 +1,22 @@
-version: '3'
-
 volumes:
   postgres_volume:
   redis_volume:
   prometheus_data:
   grafana_data:
+  traefik_certificates:
 
 services:
   webapp:
     build:
       context: ./web_app
       dockerfile: Dockerfile
-    ports:
-      - "80:80"
     depends_on:
       - solution
     restart: on-failure
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.webapp.rule=Host(`easydeploy.ru`)"
+      - "traefik.http.routers.webapp.entrypoints=web"
 
   solution:
     environment:
@@ -99,3 +100,21 @@ services:
       - "16686:16686" # web
       - "14268:14268"
       - "9411:9411"
+
+  traefik:
+    image: traefik:v2.10
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"
+      - "8081:8080" # Traefik dashboard
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - traefik_certificates:/certificates
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dashboard.rule=Host(`traefik.easydeploy.ru`)"
+      - "traefik.http.routers.dashboard.service=api@internal"
+      - "traefik.http.routers.dashboard.entrypoints=web"
