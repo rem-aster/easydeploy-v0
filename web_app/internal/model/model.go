@@ -10,10 +10,9 @@ type DeployState int
 
 const (
     StateUnknown DeployState = iota
-    StateReady
-    StateDeploying
-    StateUnknownError
-    StateConnectionError
+    StateRunning
+    StateFailed
+    StateSuccess
 )
 
 type DeployStatus struct {
@@ -23,10 +22,9 @@ type DeployStatus struct {
 
 var stateName = map[DeployState]string{
     StateUnknown: "unknown",
-    StateReady: "ready",
-    StateDeploying: "deploying",
-    StateUnknownError: "unknown_error",
-    StateConnectionError: "connection_error",
+    StateRunning: "running",
+    StateFailed: "failed",
+    StateSuccess: "success",
 }
 
 func (ss DeployState) String() string {

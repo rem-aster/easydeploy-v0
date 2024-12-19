@@ -1,4 +1,3 @@
-//nolint:all
 package main
 
 import (
@@ -87,11 +86,10 @@ func handleDeploy(c echo.Context) error {
 	password := c.FormValue("password")
 
 	// Print the form data to the console
-	fmt.Printf("Received deployment request for solution ID: %s\n", id)
-	fmt.Printf("User: %s, IP: %s, Password: %s\n", user, ip, password)
+	c.Echo().Logger.Debug("Received deployment request for solution ID: %s\n", id)
 
-	// Generate a random UUID for the deployment job
-	deploymentID := uuid.New().String()
+	deploymentID := c.Param("id")
+	Deploy(deploymentID, user, password, ip, map[string]string{})
 
 	// Respond with Hx-Redirect header for htmx redirect
 	c.Response().Header().Set("Hx-Redirect", fmt.Sprintf("/deploy/%s", deploymentID))
@@ -123,6 +121,31 @@ func apiGetDeployStatus(c echo.Context) error {
 	return c.JSON(http.StatusOK, deploy)
 }
 
+// apiDeploy handles the API request for initiating a deployment with credentials.
+func apiDeploy(c echo.Context) error {
+	var req struct {
+		SSHUser    string            `json:"ssh_user"`
+		SSHPassword string           `json:"ssh_password"`
+		SSHIP      string            `json:"ssh_ip"`
+		ExtraVars  map[string]string `json:"extra_vars"`
+	}
+
+	id := c.Param("id") // Extract deployment ID from the request
+
+	// Parse JSON body
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{"error": "Invalid request payload"})
+	}
+
+	// Initiate deployment
+	deploymentID, err := Deploy(id, req.SSHUser, req.SSHPassword, req.SSHIP, req.ExtraVars)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "Failed to initiate deployment", "details": err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, echo.Map{"deployment_id": deploymentID})
+}
+
 // gRPC client connection
 var grpcClient pb.SolutionV1Client
 
@@ -150,6 +173,7 @@ func main() {
 	api.GET("/solutions", apiGetSolutions)
 	api.GET("/solution/:id", apiGetSolution)
 	api.GET("/deploy/:id", apiGetDeployStatus)
+	api.POST("/deploy/:id", apiDeploy)
 
 	// Web application routes
 	webapp := e.Group("")
@@ -243,7 +267,6 @@ func Deploy(id string, sshUser string, sshPassword string, sshIP string, extraVa
 		SshKey:     sshPassword, // Assuming SSH key for simplicity
 		ExtraVars:  extraVars,
 	}
-
 	// Call the gRPC Deploy method
 	response, err := grpcClient.Deploy(ctx, req)
 	if err != nil {
@@ -255,14 +278,12 @@ func Deploy(id string, sshUser string, sshPassword string, sshIP string, extraVa
 
 func mapGrpcStatusToState(status string) model.DeployState {
     switch status {
-    case "ready":
-        return model.StateReady
-    case "deploying":
-        return model.StateDeploying
-    case "unknown_error":
-        return model.StateUnknownError
-    case "connection_error":
-        return model.StateConnectionError
+    case "running":
+        return model.StateRunning
+    case "failed":
+        return model.StateFailed
+    case "success":
+        return model.StateSuccess
     default:
         return model.StateUnknown
     }
