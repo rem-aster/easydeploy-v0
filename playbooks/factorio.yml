@@ -1,0 +1,73 @@
+---
+- name: Deploy Factorio server using Docker
+  hosts: all
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  become: true
+  tasks:
+    - name: Check if Docker is installed
+      command: which docker
+      register: docker_check
+      ignore_errors: true
+
+    - name: Install prerequisites for Docker
+      apt:
+        name: "{{ item }}"
+        state: present
+        update_cache: yes
+      loop:
+        - apt-transport-https
+        - ca-certificates
+        - curl
+        - software-properties-common
+      when: docker_check.rc != 0
+
+    - name: Add Docker GPG key
+      command: curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+      when: docker_check.rc != 0
+
+    - name: Add Docker repository
+      apt_repository:
+        repo: deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu focal stable
+        state: present
+      when: docker_check.rc != 0
+
+    - name: Install Docker
+      apt:
+        name: docker-ce
+        state: present
+        update_cache: yes
+      when: docker_check.rc != 0
+
+    - name: Ensure Docker service is installed and running
+      service:
+        name: docker
+        state: started
+        enabled: yes
+      failed_when: docker_check.rc != 0
+
+    - name: Create directory for Factorio data
+      file:
+        path: /opt/factorio
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Pull Factorio Docker image
+      docker_image:
+        name: factoriotools/factorio
+        tag: latest
+        source: pull
+
+    - name: Run Factorio server container
+      docker_container:
+        name: factorio
+        image: factoriotools/factorio:latest
+        state: started
+        restart_policy: always
+        published_ports:
+          - "34197:34197/udp"
+          - "27015:27015/tcp"
+        volumes:
+          - /opt/factorio:/factorio

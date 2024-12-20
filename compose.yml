@@ -17,6 +17,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.webapp.rule=Host(`easydeploy.ru`)"
       - "traefik.http.routers.webapp.entrypoints=web"
+      - "traefik.http.services.webapp.loadbalancer.server.port=8082"
 
   solution:
     environment:
@@ -102,19 +103,15 @@ services:
       - "9411:9411"
 
   traefik:
-    image: traefik:v2.10
+    image: traefik:v3.2
     command:
       - "--api.insecure=true"
       - "--providers.docker=true"
-      - "--entrypoints.web.address=:80"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entryPoints.web.address=:80"
     ports:
       - "80:80"
       - "8081:8080" # Traefik dashboard
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/run/docker.sock:/var/run/docker.sock:ro
       - traefik_certificates:/certificates
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.dashboard.rule=Host(`traefik.easydeploy.ru`)"
-      - "traefik.http.routers.dashboard.service=api@internal"
-      - "traefik.http.routers.dashboard.entrypoints=web"
