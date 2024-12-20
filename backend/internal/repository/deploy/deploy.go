@@ -14,8 +14,8 @@ func (r *repo) Deploy(ctx context.Context, model *model.Deploy) (int64, error) {
 
 	builderInsert := sq.Insert(tableName).
 		PlaceholderFormat(sq.Dollar).
-		Columns(nameColumn, solutionIdColumn, idPlaybookColumn, sshAddressColumn, sshKeyColumn, extraColumn, createdAtColumn, updatedAtColumn).
-		Values(modelRepo.DeployInfo.Name, modelRepo.DeployInfo.SolutionId, modelRepo.DeployInfo.IDPlaybook, modelRepo.DeployInfo.SSHAddress, modelRepo.DeployInfo.SSHKey, modelRepo.DeployInfo.Extra, modelRepo.CreatedAt, modelRepo.UpdatedAt).
+		Columns(nameColumn, solutionIdColumn, idPlaybookColumn, sshAddressColumn, sshKeyColumn, extraColumn).
+		Values(modelRepo.DeployInfo.Name, modelRepo.DeployInfo.SolutionId, modelRepo.DeployInfo.IDPlaybook, modelRepo.DeployInfo.SSHAddress, modelRepo.DeployInfo.SSHKey, modelRepo.DeployInfo.Extra).
 		Suffix("RETURNING id")
 
 	query, args, err := builderInsert.ToSql()
