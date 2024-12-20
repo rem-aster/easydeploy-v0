@@ -1,8 +1,10 @@
 package main
 
 import (
+
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/labstack/gommon/log"
 
 	pb "gitlab.crja72.ru/gospec/go16/easydeploy/web_app/pkg/solution_v1"
 	"google.golang.org/grpc"
@@ -16,6 +18,7 @@ var grpcClient pb.SolutionV1Client
 func main() {
 
 	e := echo.New()
+	e.Logger.SetLevel(log.DEBUG)
 
 	// Initialize gRPC connection
 	conn, err := grpc.NewClient("solution:50052", grpc.WithTransportCredentials(insecure.NewCredentials()))

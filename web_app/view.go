@@ -24,6 +24,9 @@ func viewSolutions(c echo.Context) error {
 // viewSolution serves a page for a specific solution.
 func viewSolution(c echo.Context) error {
 	id := c.Param("id") // Extract solution ID from the request
+	if id == "" {
+		c.Echo().Logger.Fatal("Fatal: Got empty ID")
+	}
 	solution, err := GetSolution(id)
 	if err != nil {
 		return c.NoContent(http.StatusNotFound) // Return 404 if solution is not found
