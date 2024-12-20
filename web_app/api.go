@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
-	
+
 	"github.com/labstack/echo/v4"
 )
 
@@ -11,6 +11,7 @@ import (
 // handleDeploy handles the form submission for deployment.
 func handleDeploy(c echo.Context) error {
 	id := c.Param("id") // Extract solution ID from the URL parameter
+	c.Echo().Logger.Debugf("Extracted ID: %s", id)
 
 	// Parse form data
 	user := c.FormValue("user")
