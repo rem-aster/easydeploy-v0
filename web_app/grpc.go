@@ -88,7 +88,7 @@ func Deploy(id string, sshUser string, sshPassword string, sshIP string, extraVa
 	// Construct gRPC DeployRequest
 	req := &pb.DeployRequest{
 		SolutionId: parseInt64OrZero(id),
-		SshAddress: fmt.Sprintf("%s@%s", sshUser, sshIP),
+		SshAddress: fmt.Sprintf("%s@%s:22", sshUser, sshIP),
 		SshKey:     sshPassword, // Assuming SSH key for simplicity
 		ExtraVars:  extraVars,
 	}
