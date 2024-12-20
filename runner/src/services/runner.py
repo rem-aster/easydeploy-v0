@@ -15,19 +15,19 @@ class RunnerServiceV1(AnsibleService, PlaybookServiceV1):
         super(AnsibleService, self).__init__()
     async def RunPlaybook(self, request: RunPlaybookRequest, context) -> RunPlaybookResponse:
         data = MessageToDict(request)
+        id = uuid4()
         pb_name = data.get('playbookName')
         if pb_name is None:
-            return RunPlaybookResponse(id="", status=TaskStatus.failed)
+            return RunPlaybookResponse(id=str(id), status=TaskStatus.failed)
         try:
             ssh_addr = data.get('sshAddress').split("@")
             username = ssh_addr[0]
             host, port = ssh_addr[1].split(":")
             passw = data.get('sshPassword')
         except Exception:
-            return RunPlaybookResponse(id="", status=TaskStatus.failed)
+            return RunPlaybookResponse(id=str(id), status=TaskStatus.failed)
         extra = data.get('extraVars')
         req = AnsibleRequest(pb_name, host, port, username, passw, extra)
-        id = uuid4()
         asyncio.create_task(self.run_playbook(id, req))
         return RunPlaybookResponse(id=str(id), status=TaskStatus.running)
     
