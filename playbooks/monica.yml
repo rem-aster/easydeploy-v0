@@ -1,0 +1,108 @@
+---
+- name: Deploy Monica Personal CRM using Docker
+  hosts: all
+  become: true
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+
+  tasks:
+    - name: Check if Docker is installed
+      command: which docker
+      register: docker_check
+      ignore_errors: true
+
+    - name: Install prerequisites for Docker
+      apt:
+        name: "{{ item }}"
+        state: present
+        update_cache: yes
+      loop:
+        - apt-transport-https
+        - ca-certificates
+        - curl
+        - software-properties-common
+      when: docker_check.rc != 0
+
+    - name: Add Docker GPG key
+      command: curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+      when: docker_check.rc != 0
+
+    - name: Add Docker repository
+      apt_repository:
+        repo: deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu focal stable
+        state: present
+      when: docker_check.rc != 0
+
+    - name: Install Docker
+      apt:
+        name: docker-ce
+        state: present
+        update_cache: yes
+      when: docker_check.rc != 0
+
+    - name: Ensure Docker service is installed and running
+      service:
+        name: docker
+        state: started
+        enabled: yes
+      failed_when: docker_check.rc != 0
+
+    - name: Create directory for Monica data
+      file:
+        path: /opt/monica
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Pull Monica Docker image
+      docker_image:
+        name: monica
+        tag: latest
+        source: pull
+
+    - name: Pull MySQL Docker image
+      docker_image:
+        name: mysql
+        tag: 5.7
+        source: pull
+
+    - name: Create a Docker network
+      docker_network:
+        name: monica-network
+        state: present
+
+    - name: Run MySQL container
+      docker_container:
+        name: monica-db
+        image: mysql:5.7
+        state: started
+        restart_policy: always
+        env:
+          MYSQL_ROOT_PASSWORD: "riWzopV901TvmpFAGJjo"
+          MYSQL_DATABASE: monica
+          MYSQL_USER: monica_user
+          MYSQL_PASSWORD: "riWzopV901TvmpFAGJjo"
+        volumes:
+          - /opt/monica-db:/var/lib/mysql
+        networks:
+          - name: monica-network
+
+    - name: Run Monica CRM container
+      docker_container:
+        name: monica
+        image: monica:latest
+        state: started
+        restart_policy: always
+        published_ports:
+          - "80:80"
+        volumes:
+          - /opt/monica:/var/www/monica
+        env:
+          DB_HOST: monica-db
+          DB_PORT: "3306"
+          DB_DATABASE: monica
+          DB_USERNAME: monica_user
+          DB_PASSWORD: "riWzopV901TvmpFAGJjo"
+        networks:
+          - name: monica-network
