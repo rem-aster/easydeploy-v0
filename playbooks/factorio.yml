@@ -20,21 +20,32 @@
         - ca-certificates
         - curl
         - software-properties-common
+        - gpg
       when: docker_check.rc != 0
 
     - name: Add Docker GPG key
-      command: curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+      shell: curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+      args:
+        creates: /usr/share/keyrings/docker-archive-keyring.gpg
       when: docker_check.rc != 0
 
     - name: Add Docker repository
       apt_repository:
-        repo: deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu focal stable
+        repo: deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable
         state: present
+      when: docker_check.rc != 0
+
+    - name: Update apt package index
+      apt:
+        update_cache: yes
       when: docker_check.rc != 0
 
     - name: Install Docker
       apt:
-        name: docker-ce
+        name:
+        - docker-ce
+        - docker-ce-cli
+        - containerd.io
         state: present
         update_cache: yes
       when: docker_check.rc != 0
@@ -44,7 +55,6 @@
         name: docker
         state: started
         enabled: yes
-      failed_when: docker_check.rc != 0
 
     - name: Create directory for Factorio data
       file:
