@@ -29,7 +29,7 @@ func handleDeploy(c echo.Context) error {
 	}
 
 	// Respond with Hx-Redirect header for htmx redirect
-	c.Response().Header().Set("Hx-Redirect", fmt.Sprintf("/deploy/%s", resId))
+	c.Response().Header().Set("Hx-Redirect", fmt.Sprintf("/deploy/%d", resId))
 	return c.NoContent(http.StatusOK)
 }
 
