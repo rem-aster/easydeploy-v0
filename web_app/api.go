@@ -19,13 +19,17 @@ func handleDeploy(c echo.Context) error {
 	password := c.FormValue("password")
 
 	// Print the form data to the console
-	c.Echo().Logger.Debug("Received deployment request for solution ID: %s\n", id)
+	c.Echo().Logger.Debugf("Received deployment request for solution ID: %s", id)
 
 	deploymentID := c.Param("id")
-	Deploy(deploymentID, user, password, ip, map[string]string{})
+	resId, err := Deploy(deploymentID, user, password, ip, map[string]string{})
+
+	if err != nil {
+		c.Echo().Logger.Fatalf("Deploy error!!!")
+	}
 
 	// Respond with Hx-Redirect header for htmx redirect
-	c.Response().Header().Set("Hx-Redirect", fmt.Sprintf("/deploy/%s", deploymentID))
+	c.Response().Header().Set("Hx-Redirect", fmt.Sprintf("/deploy/%d", resId))
 	return c.NoContent(http.StatusOK)
 }
 
