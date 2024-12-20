@@ -1,9 +1,12 @@
 package main
 
 import (
+	"golang.org/x/time/rate"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/labstack/echo-contrib/jaegertracing"
+	"github.com/labstack/echo-contrib/echoprometheus"
 	"github.com/labstack/gommon/log"
 
 	pb "gitlab.crja72.ru/gospec/go16/easydeploy/web_app/pkg/solution_v1"
@@ -20,6 +23,9 @@ func main() {
 	e := echo.New()
 	e.Logger.SetLevel(log.DEBUG)
 
+	c := jaegertracing.New(e, nil)
+    defer c.Close()
+
 	// Initialize gRPC connection
 	conn, err := grpc.NewClient("solution:50052", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
@@ -33,6 +39,11 @@ func main() {
 	e.Use(middleware.Logger()) // Log HTTP requests
 	e.Use(middleware.Recover()) // Recover from panics and return a 500 error
 	// e.Use(middleware.SecureWithConfig(middleware.DefaultSecureConfig))
+	e.Use(echoprometheus.NewMiddleware("webapp")) // adds middleware to gather metrics
+	e.Use(middleware.RateLimiter(middleware.NewRateLimiterMemoryStore(rate.Limit(10))))
+
+	// Util routes
+	e.GET("/metrics", echoprometheus.NewHandler()) // adds route to serve gathered metrics
 
 	// API routes
 	api := e.Group("/api")
